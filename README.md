@@ -18,7 +18,7 @@ Key smart contracts are found in the `./contracts` folder and cover several use 
 * `./utilities`: other useful contracts such as a contract registry
 
 ## Using Deployed Soft DAO contracts
-Find the right contracts in the [link](#Deployed-Smart-Contracts) section below.
+Find the right contracts in the [Deployed Smart Contracts](#Deployed-Smart-Contracts) section below.
 
 ### Launching a sale
 Use the FlatPriceSaleFactory contract to create a new sale.
@@ -74,7 +74,7 @@ const publicSaleTx = await saleFactory.newSale(
 ```
 
 ### Reviewing the registry
-Use the registry contracts below to find other official Soft DAO contracts. The registry is used to mark specific addresses as authentic contracts supporting specific interfaces following the [https://eips.ethereum.org/EIPS/eip-165](ERC-165) standard, and the easiest way to decode the Registry contracts is via a subgraph watching the registry, such as those deployed by [https://thegraph.com/hosted-service/subgraph/tokensoft/sales-mainnet](Tokensoft).
+Use the registry contracts below to find other official Soft DAO contracts. The registry is used to mark specific addresses as authentic contracts supporting specific interfaces following the [ERC-165](https://eips.ethereum.org/EIPS/eip-165) standard, and the easiest way to decode the Registry contracts is via a subgraph watching the registry, such as those deployed by [Tokensoft](https://thegraph.com/hosted-service/subgraph/tokensoft/sales-mainnet).
 
 Note that lowercase contract addresses are used as subgraph entity IDs.
 
@@ -89,7 +89,7 @@ Query:
       interfaceIds
       interfaceNames
     }
-	}
+  }
 }
 ```
 
