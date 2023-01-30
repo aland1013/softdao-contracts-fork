@@ -24,7 +24,7 @@ Find the right contracts in the [link](#Deployed-Smart-Contracts) section below.
 Use the FlatPriceSaleFactory contract to create a new sale.
 
 
-```
+```typescript
 import { ethers } from 'hardhat'
 
 const SaleFactoryFactory = await ethers.getContractFactory("FlatPriceSaleFactory", admin);
@@ -81,7 +81,7 @@ Note that lowercase contract addresses are used as subgraph entity IDs.
 #### Subgraph Example
 URL: https://thegraph.com/hosted-service/subgraph/tokensoft/sales-mainnet
 Query:
-```
+```graphql
 {
   registry(id: "0xc70573b924c92618e6143f6ac4c2b1ad7ba8785b") {
     addresses {
@@ -94,7 +94,7 @@ Query:
 ```
 
 Response:
-```
+```json
 {
   "data": {
     "registry": {
@@ -126,7 +126,7 @@ This resonse means that the address `0xf266195e1b30b8f536834303c555bd6aaf063f04`
 This file includes the ERC-165 interface for each Solidity contract/interface as well as the source solidity file defining the interface.
 
 Example results:
-```
+```json
 {
   "Registry": {
     "source": "contracts/utilities/Registry.sol",
@@ -155,8 +155,33 @@ Example results:
 #### `./subgraph/build/interfaces.ts`
 This file allows one to reference the interfaces when developing a subgraph.
 
-Example AssemblyScript mapping file `exampleMapping.ts`
 ```
+import { TypedMap } from "@graphprotocol/graph-ts"
+
+class knownInterfacesClass extends TypedMap<string, string>{
+  constructor(){
+	super()
+
+	// map interface names to ids AND ids to names
+
+    this.set("Sweepable", "0xac1d7eef")
+    this.set("0xac1d7eef", "Sweepable") 
+    ...
+  }
+  
+  // convenience getters to emulate an object in AssemblyScript 
+  get Sweepable(): string {
+    let value = this.get("Sweepable")
+    return value!.toString()
+  }
+  ...
+}
+
+export const knownInterfaces = new knownInterfacesClass
+```
+
+Example AssemblyScript mapping file `exampleMapping.ts`
+```typescript
 import {knownInterfaces} from '../../generated/interfaces'
 
 // do something based on interface ID
