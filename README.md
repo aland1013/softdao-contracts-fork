@@ -5,6 +5,170 @@
     ███████  ██████  ██         ██      
                                                                
                                                                
+# Soft DAO Core Primitives
+
+Key smart contracts are found in the `./contracts` folder and cover several use cases:
+* `./claim`: distribute tokens, including lockup conditions like vesting (continuous, tranche-based, or price-based) and voting power
+* `./governance`: create a DAO, including DAO governor and timelock which allow DAO members to vote with tokens held in a vesting contract
+* `./interfaces`: reference these interfaces when building third-party contracts relying on Soft DAO primitives
+* `./mocks`: stubbed out contracts used for testing and development - do not use these in production
+* `./payment`: receive arbitrary payments from users and track how much they have sent
+* `./sale`: sell tokens to users. Sales can include access restrictions, fair random queues, multiple payment methods
+* `./token`: commonly used token standards
+* `./utilities`: other useful contracts such as a contract registry
+
+## Using Deployed Soft DAO contracts
+Find the right contracts in the [link](#Deployed-Smart-Contracts) section below.
+
+### Launching a sale
+Use the FlatPriceSaleFactory contract to create a new sale.
+
+
+```
+import { ethers } from 'hardhat'
+
+const SaleFactoryFactory = await ethers.getContractFactory("FlatPriceSaleFactory", admin);
+
+[deployer, admin] = await ethers.getSigners();
+
+config = {
+    // recipient of sale proceeds
+    recipient: recipient.address,
+    // merkle root determining sale access
+    merkleRoot: merkleRoots.public,
+    // merkleRoots.public,
+    // sale maximum ($1,000,000) - note the 8 decimal precision!
+    saleMaximum: 1e6 * 1e8,
+    // user maximum ($1,000)
+    userMaximum: 1e3 * 1e8,
+    // purchase minimum ($1)
+    purchaseMinimum: 1 * 1e8,
+    // start time: now
+    startTime: Math.floor(new Date().getTime() / 1000),
+    // end time (10 days from now)
+    endTime: Math.floor(new Date(new Date().getTime() + 10 * 24 * 3600 * 1000).getTime() / 1000),
+    // max fair queue time 1 hour
+    maxQueueTime: 3600,
+    // information about the sale
+    URI: 'https://example.com'
+}
+
+const publicSaleTx = await saleFactory.newSale(
+    // the owner of the new sale (can later modify the sale)
+    deployer.address,
+    // the sale configuration
+    config,
+    // base currency
+    'USD',
+    // native payments enabled
+    true,
+    // native price oracle
+    ethOracle.address,
+    // payment tokens
+    [usdc.address],
+    // payment token price oracles
+    [usdcOracle.address],
+    // payment token decimals
+    [6]
+)
+```
+
+### Reviewing the registry
+Use the registry contracts below to find other official Soft DAO contracts. The registry is used to mark specific addresses as authentic contracts supporting specific interfaces following the [https://eips.ethereum.org/EIPS/eip-165](ERC-165) standard, and the easiest way to decode the Registry contracts is via a subgraph watching the registry, such as those deployed by [https://thegraph.com/hosted-service/subgraph/tokensoft/sales-mainnet](Tokensoft).
+
+Note that lowercase contract addresses are used as subgraph entity IDs.
+
+#### Subgraph Example
+URL: https://thegraph.com/hosted-service/subgraph/tokensoft/sales-mainnet
+Query:
+```
+{
+  registry(id: "0xc70573b924c92618e6143f6ac4c2b1ad7ba8785b") {
+    addresses {
+      id
+      interfaceIds
+      interfaceNames
+    }
+	}
+}
+```
+
+Response:
+```
+{
+  "data": {
+    "registry": {
+      "addresses": [
+        {
+          "id": "0xf266195e1b30b8f536834303c555bd6aaf063f04",
+          "interfaceIds": [
+            "0xab85ea0e",
+            "0xfc57b782",
+            "0x09e04257",
+            "0x35ef410e"
+          ],
+          "interfaceNames": [
+            "IDistributor",
+            "IAdvancedDistributor",
+            "IContinuousVesting",
+            "IMerkleSet"
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+This resonse means that the address `0xf266195e1b30b8f536834303c555bd6aaf063f04` is known to the Soft DAO as a Distributor and includes advanced features, a merkle root access list, and continuous vesting. See the two files below for more information on the interfaces.
+
+#### `./subgraph/abis/interfaces.json`
+This file includes the ERC-165 interface for each Solidity contract/interface as well as the source solidity file defining the interface.
+
+Example results:
+```
+{
+  "Registry": {
+    "source": "contracts/utilities/Registry.sol",
+    "id": "0xe711948a"
+  },
+  "FlatPriceSaleFactory": {
+    "source": "contracts/sale/v2/FlatPriceSaleFactory.sol",
+    "id": "0xfcb73502"
+  },
+  "FlatPriceSale": {
+    "source": "contracts/sale/v2/FlatPriceSale.sol",
+    "id": "0x7a6d298d"
+  },
+  "IERC20": {
+    "source": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+    "id": "0x36372b07"
+  },
+  "IVotes": {
+    "source": "@openzeppelin/contracts/governance/utils/IVotes.sol",
+    "id": "0xe90fb3f6"
+  },
+  ...
+}
+```
+
+#### `./subgraph/build/interfaces.ts`
+This file allows one to reference the interfaces when developing a subgraph.
+
+Example AssemblyScript mapping file `exampleMapping.ts`
+```
+import {knownInterfaces} from '../../generated/interfaces'
+
+// do something based on interface ID
+if (registeredAddress.interfaceIds.includes(knownInterfaces.IDistributor)) {
+    log.info('Registered {} as a Distributor', [registeredAddress.id])
+    saveDistributor(distributor.id, block)
+}
+```
+
+## Using Soft DAO source
+The contracts are licensed under the MIT license. Use them however you like - we'd appreciate a note that your core primitives are based on the Soft DAO!
+
 # Deployed Smart Contracts
 
 ## Avalanche
