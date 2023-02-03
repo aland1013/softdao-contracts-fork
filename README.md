@@ -155,7 +155,7 @@ Example results:
 #### `./subgraph/build/interfaces.ts`
 This file allows one to reference the interfaces when developing a subgraph.
 
-```
+```typescript
 import { TypedMap } from "@graphprotocol/graph-ts"
 
 class knownInterfacesClass extends TypedMap<string, string>{
