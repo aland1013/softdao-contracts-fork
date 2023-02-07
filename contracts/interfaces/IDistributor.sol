@@ -27,4 +27,14 @@ interface IDistributor {
 	function getClaimableAmount(address beneficiary) external view returns (uint256);
 
 	function getFractionDenominator() external view returns (uint256);
+
+	function token() external view returns (IERC20);
+	
+	function total() external view returns (uint256);
+
+	function uri() external view returns (string memory);
+
+	function NAME() external view returns (string memory);
+
+	function VERSION() external view returns (uint256);
 }
