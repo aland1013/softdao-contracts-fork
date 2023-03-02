@@ -2,54 +2,67 @@
 pragma solidity =0.8.16;
 
 // import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+// import {EIP712} from "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {IAbstractToken, IAbstractERC20, AbstractTokenMessage, AbstractTokenMessageStatus} from "../interfaces/IAbstractToken.sol";
-import {SignatureValidator} from "./SignatureValidator.sol";
+import {GenericEIP712} from "./GenericEIP712.sol";
 
-abstract contract AbstractToken is IAbstractToken, Ownable, SignatureValidator {
-    SignatureValidator public validator;
-    mapping(bytes32 => bool) reified;
+abstract contract AbstractToken is IAbstractToken, Ownable, GenericEIP712 {
+    event SetSigner(address signer);
+    mapping(bytes32 => bool) used;
+    address private signer;
 
-    constructor(address _signer) SignatureValidator(_signer) {}
+    // The type of content signed in the EIP-712 signature
+    bytes32 internal constant TYPE_HASH = keccak256("AbstractTokenMessage(uint256 chainId,address implementation,address owner,uint256 nonce)");
+    // bytes32 public constant TYPE_HASH = keccak256("AbstractTokenMessage(uint256 chainId,address implementation,address owner,bytes meta,uint256 nonce)");
+
+	modifier validMessage(AbstractTokenMessage calldata message) {
+        AbstractTokenMessageStatus s = status(message);
+        require(s != AbstractTokenMessageStatus.used, "message used");
+        require(s != AbstractTokenMessageStatus.invalid, "message invalid");
+		_;
+	}
+
+    constructor(address _signer) GenericEIP712('AbstractToken', '1') {
+        _setSigner(_signer);
+    }
 
     // the actual mechanics of reifying the token depend on the type of token
     function _reify(AbstractTokenMessage calldata message) internal virtual;
 
     // transforms token(s) from message to contract
-    function reify(AbstractTokenMessage calldata message) public {
+    function reify(AbstractTokenMessage calldata message) public validMessage(message) {
+        console.log("*** message status");
+        console.log(uint256(status(message)));
         // checks
-        require(
-            status(message) == AbstractTokenMessageStatus.valid,
-            "message reified or invalid"
-        );
+        require(message.chainId == block.chainid, "for other chain");
+        require(message.implementation == address(this), "for other contract");
 
         // effects
         bytes32 id = messageId(message);
-        reified[id] = true;
+        used[id] = true;
 
         // interactions
         // the actual mechanics of creating the token depends on implementation
         _reify(message);
+        emit Reify(message);
     }
 
     // the actual mechanics of dereifying the token depend on the type of token
     function _dereify(AbstractTokenMessage calldata message) internal virtual;
 
     // transforms token(s) from contract to message
-    function dereify(AbstractTokenMessage calldata message) public {
-        /**
-        Requirements to de-reify tokens
-        - only the signer can authorize de-reification
-        */
-
+    function dereify(AbstractTokenMessage calldata message) public validMessage(message) {
         // checks
-        require(
-            status(message) == AbstractTokenMessageStatus.unknown,
-            "must dereify to another domain"
-        );
+        require(message.chainId != block.chainid || message.implementation != address(this), "same contract");
 
         // effects
+        bytes32 id = messageId(message);
+        used[id] = true;
+
         // interactions
         _dereify(message);
         emit Dereify(message);
@@ -67,21 +80,18 @@ abstract contract AbstractToken is IAbstractToken, Ownable, SignatureValidator {
         bytes32 id = messageId(message);
 
         // this message was once valid but now it is reified
-        if (reified[id]) return AbstractTokenMessageStatus.reified;
+        if (used[id]) return AbstractTokenMessageStatus.used;
 
         // the metadata is not valid
         if (!_validMeta(message.meta)) return AbstractTokenMessageStatus.invalid;
 
-        // the message was never valid
-        if (validateSignature(id, message.proof) != MAGIC_VALUE)
-            return AbstractTokenMessageStatus.invalid;
-        
-        // the message is not intended for this contract
-        if (message.chainId != block.chainid || message.implementation != address(this)) {
-            return AbstractTokenMessageStatus.unknown;
-        }
+        // message must include a valid proof (EIP-712 signature)
+        // 
+        // note that the message chainId and implementation may be different than this contract's! (It could be intended for another chain but still valid for dereification)
+        bytes32 digest = _hashTypedDataV4(id, message.chainId, message.implementation);
+        if(!SignatureChecker.isValidSignatureNow(signer, digest, message.proof)) return AbstractTokenMessageStatus.invalid;
 
-        // the message is still valid
+        // all checks pass: the message is valid
         return AbstractTokenMessageStatus.valid;
     }
 
@@ -90,25 +100,34 @@ abstract contract AbstractToken is IAbstractToken, Ownable, SignatureValidator {
         pure
         returns (bytes32)
     {
-        // TODO: should this use EIP-712? The ID of the message is extrinsic to the chain.
-        // note that the proof is not part of the message id: this enables a signature proof
+        // Note that the message ID is also the EIP-712 hash of the message struct - the fields must match the contents of TYPE_HASH
         return keccak256(
             abi.encode(
+                TYPE_HASH,
                 message.chainId,
                 message.implementation,
                 message.owner,
-                message.meta
+                // keccak256(message.meta),
+                message.nonce
             )
         );
     }
 
+    function _setSigner (address _signer) internal {
+        signer = _signer;
+        emit SetSigner(signer);
+    }
+
     // admin functions
-    function setSigner(address _signer) public onlyOwner {
+    function setSigner(address _signer) external onlyOwner {
         _setSigner(_signer);
+    }
+
+    function getSigner () external view returns (address) {
+        return signer;
     }
 
     function _equal(string memory a, string memory b) internal pure returns (bool) {
       return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
-
     }
 }

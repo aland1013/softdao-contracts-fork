@@ -7,18 +7,18 @@ import { IERC721 } from '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import { IERC1155 } from '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 
 struct AbstractTokenMessage {
-  uint64 chainId; // the chain where the token(s) can be reified
+  uint256 chainId; // the chain where the token(s) can be reified
   address implementation; // the contract by which the token(s) can be reified
   address owner; // the address that owns the token(s)
   bytes meta; // application-specific information defining the token(s)
+  uint256 nonce; // counter to allow otherwise duplicate messages
   bytes proof; // application-specific information authorizing the creation of the token(s)
 }
 
 enum AbstractTokenMessageStatus {
   invalid, // the token message is rejected by the contract
-  valid, // the token message is a valid abstract token
-  reified, // the token message has already been reified
-  unknown // the token message is not intended for this contract
+  valid, // the token message is valid and has not already been used
+  used // the token message has already been used to reify or dereify tokens
 }
 
 interface IAbstractToken {
@@ -37,8 +37,8 @@ interface IAbstractToken {
     view
     returns (AbstractTokenMessageStatus status);
 
-  // unique message identifier
-  function messageId(AbstractTokenMessage calldata message) external view returns (bytes32);
+  // id of token in message
+  function id(AbstractTokenMessage calldata message) external view returns (uint256);
 
   // quantity of tokens in the message
   function amount(AbstractTokenMessage calldata message) external view returns (uint256);

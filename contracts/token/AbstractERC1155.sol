@@ -6,7 +6,10 @@ import { IAbstractToken, IAbstractERC1155, AbstractTokenMessage, AbstractTokenMe
 import { AbstractToken } from './AbstractToken.sol';
 
 contract AbstractERC1155 is ERC1155, IAbstractERC1155, AbstractToken {
-  constructor(string memory _uri) ERC1155(_uri) AbstractToken(signer) {}
+  constructor(
+    string memory _uri,
+    address _signer
+) ERC1155(_uri) AbstractToken(_signer) {}
 
   function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC1155) returns (bool) {
     return
