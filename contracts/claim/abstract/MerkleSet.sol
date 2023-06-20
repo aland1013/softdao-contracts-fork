@@ -11,13 +11,13 @@ contract MerkleSet is IMerkleSet {
 		_setMerkleRoot(_merkleRoot);
 	}
 
-	modifier validMerkleProof(bytes32 leaf, bytes32[] calldata merkleProof) {
+	modifier validMerkleProof(bytes32 leaf, bytes32[] memory merkleProof) {
 		_verifyMembership(leaf, merkleProof);
 
 		_;
 	}
 
-	function _testMembership(bytes32 leaf, bytes32[] calldata merkleProof)
+	function _testMembership(bytes32 leaf, bytes32[] memory merkleProof)
 		internal
 		view
 		returns (bool)
@@ -29,7 +29,7 @@ contract MerkleSet is IMerkleSet {
 		return merkleRoot;
 	}
 
-	function _verifyMembership(bytes32 leaf, bytes32[] calldata merkleProof) internal view {
+	function _verifyMembership(bytes32 leaf, bytes32[] memory merkleProof) internal view {
 		require(_testMembership(leaf, merkleProof), "invalid proof");
 	}
 

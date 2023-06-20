@@ -50,6 +50,14 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
     emit InitializeDistributionRecord(beneficiary, totalAmount);
   }
 
+  // NOTE: separate distribution and execution because crosschain distributors have 
+  // different distribution logic.
+  function _settleClaim(address _recipient, uint256 _amount) internal virtual {
+		token.safeTransfer(_recipient, _amount);
+		emit Claim(_recipient, _amount);
+	}
+
+  // Includes both claim execution (update claim status) and settlement (move tokens)
   function _executeClaim(address beneficiary, uint256 _totalAmount) internal virtual returns (uint256) {
     // Checks: NONE! THIS FUNCTION DOES NOT CHECK PERMISSIONS: CALLER MUST VERIFY THE CLAIM IS VALID!
 		uint120 totalAmount = uint120(_totalAmount);
@@ -67,8 +75,7 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
     claimed += claimableAmount;
 
     // interactions
-    token.safeTransfer(beneficiary, claimableAmount);
-    emit Claim(beneficiary, claimableAmount);
+    _settleClaim(beneficiary, claimableAmount);
 
 		return claimableAmount;
   }

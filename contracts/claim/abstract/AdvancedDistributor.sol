@@ -31,14 +31,14 @@ abstract contract AdvancedDistributor is Ownable, Sweepable, ERC20Votes, Distrib
 		return tokenAmount * voteFactor / fractionDenominator;
 	}
 
-	function _initializeDistributionRecord(address beneficiary, uint256 totalAmount) internal override {
+	function _initializeDistributionRecord(address beneficiary, uint256 totalAmount) internal virtual override {
 		super._initializeDistributionRecord(beneficiary, totalAmount);
 
 		// add voting power through ERC20Votes extension
 		_mint(beneficiary, tokensToVotes(totalAmount));
 	}
 
-	function _executeClaim(address beneficiary, uint256 totalAmount) internal override returns (uint256 _claimed) {
+	function _executeClaim(address beneficiary, uint256 totalAmount) internal virtual override returns (uint256 _claimed) {
 		_claimed = super._executeClaim(beneficiary, totalAmount);
 
 		// reduce voting power through ERC20Votes extension
