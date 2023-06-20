@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
@@ -58,11 +58,13 @@ contract GovernorMultiSourceUpgradeable is
 	}
 
 	function votingDelay() public pure virtual override returns (uint256) {
-		return 6545; // 1 day at 12 seconds per block
+		// return 6545; // 1 day at 12 seconds per block
+		return 10; // blocks
 	}
 
 	function votingPeriod() public pure virtual override returns (uint256) {
-		return 50400; // 1 week at 12 seconds per block
+		// return 50400; // 1 week at 12 seconds per block
+		return 1000; // blocks
 	}
 
 	function proposalThreshold() public pure override returns (uint256) {

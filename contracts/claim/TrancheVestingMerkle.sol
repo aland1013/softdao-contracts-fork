@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -39,17 +39,14 @@ contract TrancheVestingMerkle is TrancheVesting, MerkleSet {
 	function claim(
 		uint256 index, // the beneficiary's index in the merkle root
 		address beneficiary, // the address that will receive tokens
-		uint256 amount, // the total claimable by this beneficiary
+		uint256 totalAmount, // the total claimable by this beneficiary
 		bytes32[] calldata merkleProof
 	)
 		external
-		validMerkleProof(keccak256(abi.encodePacked(index, beneficiary, amount)), merkleProof)
+		validMerkleProof(keccak256(abi.encodePacked(index, beneficiary, totalAmount)), merkleProof)
 		nonReentrant
 	{
-		if (!records[beneficiary].initialized) {
-			_initializeDistributionRecord(beneficiary, amount);
-		}
-		_executeClaim(beneficiary, uint120(getClaimableAmount(beneficiary)));
+		_executeClaim(beneficiary, totalAmount);
 	}
 
 	function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {

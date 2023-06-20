@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -21,7 +21,7 @@ abstract contract AdvancedDistributor is Ownable, Sweepable, ERC20Votes, Distrib
 		string memory _uri,
 		uint256 _voteFactor,
 		uint256 _fractionDenominator
-	) Distributor(_token, _total, _uri, _fractionDenominator) ERC20Permit("Internal vote tracker") ERC20("Internal vote tracker", "IVT") Sweepable(payable(owner())) {
+	) Distributor(_token, _total, _uri, _fractionDenominator) ERC20Permit("Internal vote tracker") ERC20("Internal vote tracker", "IVT") Sweepable(payable(msg.sender)) {
 		voteFactor = _voteFactor;
 		emit SetVoteFactor(voteFactor);
 	}
@@ -31,18 +31,18 @@ abstract contract AdvancedDistributor is Ownable, Sweepable, ERC20Votes, Distrib
 		return tokenAmount * voteFactor / fractionDenominator;
 	}
 
-	function _initializeDistributionRecord(address beneficiary, uint256 amount) internal override {
-		super._initializeDistributionRecord(beneficiary, amount);
+	function _initializeDistributionRecord(address beneficiary, uint256 totalAmount) internal override {
+		super._initializeDistributionRecord(beneficiary, totalAmount);
 
 		// add voting power through ERC20Votes extension
-		_mint(beneficiary, tokensToVotes(amount));
+		_mint(beneficiary, tokensToVotes(totalAmount));
 	}
 
-	function _executeClaim(address beneficiary, uint256 _amount) internal override {
-		super._executeClaim(beneficiary, _amount);
+	function _executeClaim(address beneficiary, uint256 totalAmount) internal override returns (uint256 _claimed) {
+		_claimed = super._executeClaim(beneficiary, totalAmount);
 
 		// reduce voting power through ERC20Votes extension
-		_burn(beneficiary, tokensToVotes(_amount));
+		_burn(beneficiary, tokensToVotes(_claimed));
 	}
 
 	function adjust(address beneficiary, int256 amount) external onlyOwner {

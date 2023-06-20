@@ -65,11 +65,7 @@
   },
   "HashflowRouterMock": {
     "source": "contracts/mocks/HashflowRouterMock.sol",
-    "id": "0x59a0be07"
-  },
-  "IHashflowQuote": {
-    "source": "contracts/mocks/HashflowRouterMock.sol",
-    "id": "0x1a33ceb6"
+    "id": "0xef346465"
   },
   "GovernorMultiSourceUpgradeableMock": {
     "source": "contracts/mocks/GovernorMultiSourceUpgradeableMock.sol",
@@ -110,6 +106,10 @@
   "IMerkleSet": {
     "source": "contracts/interfaces/IMerkleSet.sol",
     "id": "0x49590657"
+  },
+  "IHashflowQuote": {
+    "source": "contracts/interfaces/IHashflowQuote.sol",
+    "id": "0x1a33ceb6"
   },
   "IDistributor": {
     "source": "contracts/interfaces/IDistributor.sol",
@@ -291,6 +291,22 @@
     "source": "@openzeppelin/contracts/utils/escrow/Escrow.sol",
     "id": "0x4f2ee9b4"
   },
+  "IERC721Metadata": {
+    "source": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
+    "id": "0xda0d82f5"
+  },
+  "IERC721Receiver": {
+    "source": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+    "id": "0x150b7a02"
+  },
+  "IERC721": {
+    "source": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
+    "id": "0x8153916a"
+  },
+  "ERC721": {
+    "source": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
+    "id": "0xda0d82f5"
+  },
   "IERC20Permit": {
     "source": "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol",
     "id": "0x9d8ff7da"
@@ -315,9 +331,29 @@
     "source": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
     "id": "0x0929daa4"
   },
+  "IERC1155MetadataURI": {
+    "source": "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol",
+    "id": "0xd6c0879d"
+  },
+  "IERC1155Receiver": {
+    "source": "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol",
+    "id": "0x4fdcdb47"
+  },
+  "IERC1155": {
+    "source": "@openzeppelin/contracts/token/ERC1155/IERC1155.sol",
+    "id": "0xd849b381"
+  },
+  "ERC1155": {
+    "source": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
+    "id": "0xd6c0879d"
+  },
   "PullPayment": {
     "source": "@openzeppelin/contracts/security/PullPayment.sol",
     "id": "0xd32bc7b5"
+  },
+  "IERC1271": {
+    "source": "@openzeppelin/contracts/interfaces/IERC1271.sol",
+    "id": "0x1626ba7e"
   },
   "IVotes": {
     "source": "@openzeppelin/contracts/governance/utils/IVotes.sol",

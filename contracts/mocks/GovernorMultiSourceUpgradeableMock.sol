@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import {GovernorMultiSourceUpgradeable, TimelockControllerUpgradeable, IVotesUpgradeable} from "../governance/GovernorMultiSourceUpgradeable.sol";

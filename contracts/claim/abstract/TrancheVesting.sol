@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import { AdvancedDistributor } from "./AdvancedDistributor.sol";
@@ -45,6 +45,8 @@ abstract contract TrancheVesting is AdvancedDistributor, ITrancheVesting {
 
 	function _setTranches(Tranche[] memory _tranches) private {
 		require(_tranches.length != 0, "tranches required");
+
+		delete tranches;
 
 		uint128 lastTime = 0;
 		uint128 lastVestedFraction = 0;

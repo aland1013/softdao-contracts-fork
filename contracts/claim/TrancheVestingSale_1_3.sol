@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -87,13 +87,7 @@ contract TrancheVestingSale_1_3 is TrancheVesting {
 	function claim(
 		address beneficiary // the address that will receive tokens
 	) external validSaleParticipant(beneficiary) nonReentrant {
-		uint256 amount = getClaimableAmount(beneficiary);
-
-		if (!records[beneficiary].initialized) {
-			_initializeDistributionRecord(beneficiary, getPurchasedAmount(beneficiary));
-		}
-
-		super._executeClaim(beneficiary, amount);
+		super._executeClaim(beneficiary, getPurchasedAmount(beneficiary));
 	}
 
 	function getDistributionRecord(address beneficiary)

@@ -104,6 +104,102 @@
     "anonymous": false,
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "uint16",
+            "name": "srcChainId",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint16",
+            "name": "dstChainId",
+            "type": "uint16"
+          },
+          {
+            "internalType": "address",
+            "name": "srcPool",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "dstPool",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "srcExternalAccount",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "dstExternalAccount",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "trader",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "baseToken",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quoteToken",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "baseTokenAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteTokenAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteExpiry",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "txid",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct IHashflowQuote.XChainRFQTQuote",
+        "name": "quote",
+        "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum IHashflowQuote.XChainMessageProtocol",
+        "name": "protocol",
+        "type": "uint8"
+      }
+    ],
+    "name": "HashflowTradeXChain",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "previousOwner",

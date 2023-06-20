@@ -1,5 +1,30 @@
 [
   {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "depositEth",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "estimateCrossChainFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
@@ -165,7 +190,7 @@
       },
       {
         "internalType": "enum IHashflowQuote.XChainMessageProtocol",
-        "name": "protocol",
+        "name": "",
         "type": "uint8"
       }
     ],
