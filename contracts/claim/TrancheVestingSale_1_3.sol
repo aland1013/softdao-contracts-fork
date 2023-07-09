@@ -57,7 +57,7 @@ contract TrancheVestingSale_1_3 is TrancheVesting {
 
 	// File specific version - starts at 1, increments on every solidity diff
 	function VERSION() external pure virtual override returns (uint256) {
-		return 3;
+		return 4;
 	}
 
 	function tryDecimals(IERC20 _token) internal view returns (int256) {
@@ -87,7 +87,11 @@ contract TrancheVestingSale_1_3 is TrancheVesting {
 	function claim(
 		address beneficiary // the address that will receive tokens
 	) external validSaleParticipant(beneficiary) nonReentrant {
-		super._executeClaim(beneficiary, getPurchasedAmount(beneficiary));
+		uint256 purchasedAmount = getPurchasedAmount(beneficiary);
+		// effects
+		uint256 claimedAmount = super._executeClaim(beneficiary, purchasedAmount);
+		// interactions
+		super._settleClaim(beneficiary, claimedAmount);
 	}
 
 	function getDistributionRecord(address beneficiary)

@@ -3,6 +3,11 @@ pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/**
+ * @title IAdjustable
+ * @dev Interface for the Adjustable contract. Defines methods to update
+ * the contract and events emitted upon update.
+ */
 interface IAdjustable {
 	event Adjust(address indexed beneficiary, int256 amount);
 	event SetToken(IERC20 indexed token);

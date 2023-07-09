@@ -3,37 +3,42 @@ pragma solidity 0.8.16;
 
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { CrosschainMerkleDistributor } from './abstract/CrosschainMerkleDistributor.sol';
-import { TrancheVesting, Tranche } from './abstract/TrancheVesting.sol';
+import { CrosschainDistributor } from './abstract/CrosschainDistributor.sol';
+import { ContinuousVesting } from './abstract/ContinuousVesting.sol';
 import { Distributor } from './abstract/Distributor.sol';
 import { AdvancedDistributor } from './abstract/AdvancedDistributor.sol';
 import { IConnext } from '../interfaces/IConnext.sol';
 import { IDistributor } from '../interfaces/IDistributor.sol';
+import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 /**
- * @title CrosschainTrancheVestingMerkle
+ * @title CrosschainContinuousVestingMerkle
  * @author
- * @notice Distributes funds to beneficiaries across Connext domains and vesting in tranches over time.
+ * @notice Distributes funds to beneficiaries across Connext domains and vesting continuously between a start and end date.
  */
-contract CrosschainTrancheVestingMerkle is CrosschainMerkleDistributor, TrancheVesting {
+contract CrosschainContinuousVestingMerkle is CrosschainMerkleDistributor, ContinuousVesting {
   constructor(
     IERC20 _token,
     IConnext _connext,
     uint256 _total,
     string memory _uri,
     uint256 _voteFactor,
-    Tranche[] memory _tranches,
+    uint256 _start,
+    uint256 _cliff,
+    uint256 _end,
     bytes32 _merkleRoot
   )
     CrosschainMerkleDistributor(_connext, _merkleRoot)
-    TrancheVesting(_token, _total, _uri, _voteFactor, _tranches)
+    ContinuousVesting(_token, _total, _uri, _voteFactor, _start, _cliff, _end)
   {}
 
-  // Every distributor must provide a name method 
+  // every distributor must provide a name method
   function NAME() external pure override(Distributor, IDistributor) returns (string memory) {
-    return 'CrosschainTrancheVestingMerkle';
+    return 'CrosschainContinuousVestingMerkle';
   }
 
-  // Every distributor must provide a version method to track changes
+
+  // every distributor must provide a version method
   function VERSION() external pure override(Distributor, IDistributor) returns (uint256) {
     return 1;
   }

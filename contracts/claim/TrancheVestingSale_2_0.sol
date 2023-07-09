@@ -51,7 +51,7 @@ contract TrancheVestingSale_2_0 is TrancheVesting {
 
 	// File specific version - starts at 1, increments on every solidity diff
 	function VERSION() external pure virtual override returns (uint256) {
-		return 4;
+		return 5;
 	}
 
 	function getPurchasedAmount(address buyer) public view returns (uint256) {
@@ -79,7 +79,11 @@ contract TrancheVestingSale_2_0 is TrancheVesting {
 	function claim(
 		address beneficiary // the address that will receive tokens
 	) external validSaleParticipant(beneficiary) nonReentrant {
-		super._executeClaim(beneficiary, getPurchasedAmount(beneficiary));
+		uint256 purchasedAmount = getPurchasedAmount(beneficiary);
+		// effects
+		uint256 claimedAmount = _executeClaim(beneficiary, purchasedAmount);
+		// interactions
+		_settleClaim(beneficiary, claimedAmount);
 	}
 
 	function getDistributionRecord(address beneficiary)

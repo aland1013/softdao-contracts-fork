@@ -40,10 +40,13 @@ contract BasicDistributor is AdvancedDistributor {
 	}
 
 	function VERSION() external pure virtual override returns (uint256) {
-		return 4;
+		return 5;
 	}
 
 	function claim(address beneficiary) external nonReentrant {
-		super._executeClaim(beneficiary, records[beneficiary].total);
+		// effects
+		uint256 claimedAmount = super._executeClaim(beneficiary, records[beneficiary].total);
+		// interactions
+		super._settleClaim(beneficiary, claimedAmount);
 	}
 }

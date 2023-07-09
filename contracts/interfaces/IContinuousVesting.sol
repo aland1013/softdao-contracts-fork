@@ -2,9 +2,8 @@
 pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IVesting } from "./IVesting.sol";
 
-interface IContinuousVesting is IVesting {
+interface IContinuousVesting {
 	event SetContinuousVesting(uint256 start, uint256 cliff, uint256 end);
 
 	function getVestingConfig()

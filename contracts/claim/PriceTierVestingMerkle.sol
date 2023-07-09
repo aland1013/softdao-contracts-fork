@@ -28,7 +28,7 @@ contract PriceTierVestingMerkle is PriceTierVesting, MerkleSet {
 	}
 
 	function VERSION() external pure override returns (uint256) {
-		return 2;
+		return 3;
 	}
 
 	function initializeDistributionRecord(
@@ -53,7 +53,10 @@ contract PriceTierVestingMerkle is PriceTierVesting, MerkleSet {
 		validMerkleProof(keccak256(abi.encodePacked(index, beneficiary, totalAmount)), merkleProof)
 		nonReentrant
 	{
-		_executeClaim(beneficiary, totalAmount);
+		// effects
+		uint256 claimedAmount = _executeClaim(beneficiary, totalAmount);
+		// interactions
+		_settleClaim(beneficiary, claimedAmount);
 	}
 
 	function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {

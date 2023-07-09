@@ -2,7 +2,6 @@
 pragma solidity 0.8.16;
 
 import { Distributor, AdvancedDistributor } from "./AdvancedDistributor.sol";
-import { IVesting } from "../../interfaces/IVesting.sol";
 import { IContinuousVesting } from "../../interfaces/IContinuousVesting.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -37,7 +36,7 @@ abstract contract ContinuousVesting is AdvancedDistributor, IContinuousVesting {
 	function getVestedFraction(
 		address, /*beneficiary*/
 		uint256 time // time is in seconds past the epoch (e.g. block.timestamp)
-	) public view override(Distributor, IVesting) returns (uint256) {
+	) public view override returns (uint256) {
 		// no tokens are vested
 		if (time <= cliff) {
 			return 0;

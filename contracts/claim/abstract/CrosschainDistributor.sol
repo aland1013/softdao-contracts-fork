@@ -27,34 +27,13 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
     domain = uint32(_connext.domain());
   }
 
-  //   // ensure single-chain execute claims will fail, and all inheriting contracts should use
-  //   // the _executeClaim() with distinctions between beneficiary and amount instead
-  //   function _executeClaim(address, uint256) internal virtual override returns (uint256) {
-  //     require(false, '!single chain');
-  //   }
-
-  // claim assumed to be valid at this point
-  function _executeClaim(
-    address _beneficiary,
-    address _recipient,
-    uint32 _recipientDomain,
-    uint256 _amount
-  ) internal virtual {
-    // updates the claim record; updates voting power internal
-    super._executeClaim(_beneficiary, _amount);
-
-    _settleClaim(_beneficiary, _recipient, _recipientDomain, _amount);
-  }
-
-  function _settleClaim(address, uint256) internal virtual override {
-    // Do nothing to preserve super._executeClaim() without doing a distribution
-    require(false, 'TODO: not sure how to handle this yet');
-  }
-
-  // Handle the crosschain-aware distribution:
-  // - beneficiary-indicated _recipient
-  // - beneficiary-indicated _recipientDomain
-  // - _amount
+  /**
+   * @notice Settles claimed tokens to any valid Connext domain.
+   * @dev permissions are not checked: call only after a valid claim is executed
+   * @param _recipient: the address that will receive tokens
+   * @param _recipientDomain: the domain of the address that will receive tokens
+   * @param _amount: the amount of claims to settle
+   */
   function _settleClaim(
     address _beneficiary,
     address _recipient,

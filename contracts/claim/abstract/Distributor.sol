@@ -7,6 +7,10 @@ import { ReentrancyGuard } from '@openzeppelin/contracts/security/ReentrancyGuar
 
 import { IDistributor, DistributionRecord } from '../../interfaces/IDistributor.sol';
 
+/**
+ * @title Distributor
+ * @notice Distributes funds to beneficiaries and tracks distribution status
+ */
 abstract contract Distributor is IDistributor, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
@@ -22,12 +26,7 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
 
   function VERSION() external view virtual returns (uint256);
 
-  constructor(
-    IERC20 _token,
-    uint256 _total,
-    string memory _uri,
-    uint256 _fractionDenominator
-  ) {
+  constructor(IERC20 _token, uint256 _total, string memory _uri, uint256 _fractionDenominator) {
     require(address(_token) != address(0), 'Distributor: token is address(0)');
     require(_total > 0, 'Distributor: total is 0');
 
@@ -38,9 +37,18 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
     emit InitializeDistributor(token, total, uri, fractionDenominator);
   }
 
-  function _initializeDistributionRecord(address beneficiary, uint256 _totalAmount) internal virtual {
-    // CALLER MUST VERIFY THE BENEFICIARY AND TOTAL ARE VALID!
-		uint120 totalAmount = uint120(_totalAmount);
+  /**
+   * @dev Set up the distribution record for a user. Permissions are not checked in this function.
+   * Amount is limited to type(uint120).max to allow each DistributionRecord to be packed into a single storage slot.
+   * 
+   * @param beneficiary The address of the beneficiary
+   * @param _totalAmount The total amount of tokens to be distributed to the beneficiary
+   */
+  function _initializeDistributionRecord(
+    address beneficiary,
+    uint256 _totalAmount
+  ) internal virtual {
+    uint120 totalAmount = uint120(_totalAmount);
 
     // Checks
     require(totalAmount <= type(uint120).max, 'Distributor: totalAmount > type(uint120).max');
@@ -50,51 +58,55 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
     emit InitializeDistributionRecord(beneficiary, totalAmount);
   }
 
-  // NOTE: separate distribution and execution because crosschain distributors have 
-  // different distribution logic.
-  function _settleClaim(address _recipient, uint256 _amount) internal virtual {
-		token.safeTransfer(_recipient, _amount);
-		emit Claim(_recipient, _amount);
-	}
+  /**
+   * @notice Record the claim internally:
+   * @dev This function does not check permissions: caller must verify the claim is valid!
+   * this function should not call any untrusted external contracts to avoid reentrancy
+   */
+  function _executeClaim(
+    address beneficiary,
+    uint256 _totalAmount
+  ) internal virtual returns (uint256) {
+    uint120 totalAmount = uint120(_totalAmount);
 
-  // Includes both claim execution (update claim status) and settlement (move tokens)
-  function _executeClaim(address beneficiary, uint256 _totalAmount) internal virtual returns (uint256) {
-    // Checks: NONE! THIS FUNCTION DOES NOT CHECK PERMISSIONS: CALLER MUST VERIFY THE CLAIM IS VALID!
-		uint120 totalAmount = uint120(_totalAmount);
-	
     // effects
-		if (records[beneficiary].total != totalAmount) {
-			// re-initialize if the total has been updated
-			_initializeDistributionRecord(beneficiary, totalAmount);
-		}
+    if (records[beneficiary].total != totalAmount) {
+      // re-initialize if the total has been updated
+      _initializeDistributionRecord(beneficiary, totalAmount);
+    }
 
-		uint120 claimableAmount = uint120(getClaimableAmount(beneficiary));
+    uint120 claimableAmount = uint120(getClaimableAmount(beneficiary));
     require(claimableAmount > 0, 'Distributor: no more tokens claimable right now');
 
     records[beneficiary].claimed += claimableAmount;
     claimed += claimableAmount;
 
-    // interactions
-    _settleClaim(beneficiary, claimableAmount);
-
-		return claimableAmount;
+    return claimableAmount;
   }
 
-  function getDistributionRecord(address beneficiary)
-    external
-    view
-    virtual
-    returns (DistributionRecord memory)
-  {
+  /**
+   * @dev Move tokens associated with the claim to the recipient. This function should be called
+   * after the claim has been executed internally to avoid reentrancy issues.
+   * @param _recipient The address of the recipient
+   * @param _amount The amount of tokens to be transferred during this claim
+   */
+  function _settleClaim(address _recipient, uint256 _amount) internal virtual {
+    token.safeTransfer(_recipient, _amount);
+    emit Claim(_recipient, _amount);
+  }
+
+  /// @notice return a distribution record
+  function getDistributionRecord(
+    address beneficiary
+  ) external view virtual returns (DistributionRecord memory) {
     return records[beneficiary];
   }
 
   // Get tokens vested as fraction of fractionDenominator
-  function getVestedFraction(address beneficiary, uint256 time)
-    public
-    view
-    virtual
-    returns (uint256);
+  function getVestedFraction(
+    address beneficiary,
+    uint256 time
+  ) public view virtual returns (uint256);
 
   function getFractionDenominator() public view returns (uint256) {
     return fractionDenominator;

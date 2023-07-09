@@ -26,7 +26,7 @@ contract ContinuousVestingMerkle is ContinuousVesting, MerkleSet {
 	}
 
 	function VERSION() external pure override returns (uint256) {
-		return 2;
+		return 3;
 	}
 
 	function initializeDistributionRecord(
@@ -51,7 +51,10 @@ contract ContinuousVestingMerkle is ContinuousVesting, MerkleSet {
 		validMerkleProof(keccak256(abi.encodePacked(index, beneficiary, totalAmount)), merkleProof)
 		nonReentrant
 	{
-		super._executeClaim(beneficiary, totalAmount);
+		// effects
+		uint256 claimedAmount = super._executeClaim(beneficiary, totalAmount);
+		// interactions
+		super._settleClaim(beneficiary, claimedAmount);
 	}
 
 	function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {

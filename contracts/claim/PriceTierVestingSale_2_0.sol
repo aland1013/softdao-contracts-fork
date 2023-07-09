@@ -67,7 +67,7 @@ contract PriceTierVestingSale_2_0 is PriceTierVesting {
 
 	// File specific version - starts at 1, increments on every solidity diff
 	function VERSION() external pure virtual override returns (uint256) {
-		return 2;
+		return 3;
 	}
 
 	function getPurchasedAmount(address buyer) public view returns (uint256) {
@@ -98,7 +98,11 @@ contract PriceTierVestingSale_2_0 is PriceTierVesting {
 		uint256 claimableAmount = getClaimableAmount(beneficiary);
 		uint256 purchasedAmount = getPurchasedAmount(beneficiary);
 
-		super._executeClaim(beneficiary, purchasedAmount);
+		// effects
+		uint256 claimedAmount = super._executeClaim(beneficiary, purchasedAmount);
+
+		// interactions
+		super._settleClaim(beneficiary, claimedAmount);
 	}
 
 	function getDistributionRecord(address beneficiary)
