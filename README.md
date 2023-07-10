@@ -10,7 +10,7 @@ Important: *run tests on a fresh chain to see what they should do.* I minimized 
 The two contracts that will be used in conjunction are `Satellite.sol` and `CrosschainTrancheVestingMerkle.sol`. Together, they allow an admin to set up an airdrop across multiple chains. We can safely assume that the Distributor contract owner is a trusted party.
 
 These contracts allow the owner to:
-* determine eligibility and token quantities for the airdrop using a merkle root (e.g. address A gets 100 USDC tokens, address B gets 200 USDC tokens)
+* determine eligibility, token quantities, and domain for the airdrop using a merkle root (e.g. address A gets 100 USDC tokens on Ethereum, address B gets 200 USDC tokens on Arbitrum)
 * determine vesting schedule (e.g. 10% of the tokens vest August 1, 80% vest September 1, and the final 10% vest October 1).
 * update eligibility and vesting as required
 
