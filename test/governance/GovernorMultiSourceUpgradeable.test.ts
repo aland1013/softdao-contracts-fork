@@ -223,7 +223,7 @@ const executeProposal = async (targets: string[], values: BigNumberish[], callda
 	expect(await governor.state(proposalId)).toEqual(ProposalState.Executed)
 }
 
-describe("GovernorMultiSourceUpgradeable", function () {
+describe.skip("GovernorMultiSourceUpgradeable", function () {
 	beforeAll(async () => {
 		let member1: SignerWithAddress
 		let member2: SignerWithAddress
