@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/c/git/dao-contracts/contracts/claim/BasicDistributor.sol": {
-      "lastModificationDate": 1688866833339,
-      "contentHash": "00aa4c88ef7dcc82f4c6f7e0919e3787",
+      "lastModificationDate": 1689199585048,
+      "contentHash": "660bb815a49e84d00c585d89ec85a8d9",
       "sourceName": "contracts/claim/BasicDistributor.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -48,8 +48,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/AdvancedDistributor.sol": {
-      "lastModificationDate": 1688866833341,
-      "contentHash": "0ee5f8a13c4a094ee5138da2e9e699dd",
+      "lastModificationDate": 1689199585052,
+      "contentHash": "699f51279985b5281efaa5d235f415a7",
       "sourceName": "contracts/claim/abstract/AdvancedDistributor.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -89,7 +89,8 @@
         "./Distributor.sol",
         "../../interfaces/IAdjustable.sol",
         "../../interfaces/IVoting.sol",
-        "../../utilities/Sweepable.sol"
+        "../../utilities/Sweepable.sol",
+        "../../utilities/FairQueue.sol"
       ],
       "versionPragmas": [
         "0.8.16"
@@ -1131,8 +1132,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/TrancheVesting.sol": {
-      "lastModificationDate": 1688866833343,
-      "contentHash": "38151069b70e8d9b6de41fb06ad6f319",
+      "lastModificationDate": 1689199585054,
+      "contentHash": "88a1d7e85b06910d57f3b3e659a9e230",
       "sourceName": "contracts/claim/abstract/TrancheVesting.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -3861,8 +3862,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/TrancheVestingSale_2_0.sol": {
-      "lastModificationDate": 1688866833341,
-      "contentHash": "c42ea08504ccaab5d40b252c8edb7af3",
+      "lastModificationDate": 1689199585051,
+      "contentHash": "dab033f07aff01a0d1a36426a3cce416",
       "sourceName": "contracts/claim/TrancheVestingSale_2_0.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4370,8 +4371,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/mocks/ConnextMock.sol": {
-      "lastModificationDate": 1688866833346,
-      "contentHash": "b7bb7eb6747b6305f8170f8e878652e0",
+      "lastModificationDate": 1689199585057,
+      "contentHash": "753ec4589b221dcecd402d58a08712aa",
       "sourceName": "contracts/mocks/ConnextMock.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4417,8 +4418,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/CrosschainMerkleDistributor.sol": {
-      "lastModificationDate": 1688866833342,
-      "contentHash": "81910db3aa0a8fdcd0d0e39c64b06e96",
+      "lastModificationDate": 1689201686315,
+      "contentHash": "33af8b5eff2bef3d637bcff77458ccce",
       "sourceName": "contracts/claim/abstract/CrosschainMerkleDistributor.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4513,8 +4514,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/CrosschainDistributor.sol": {
-      "lastModificationDate": 1688866833342,
-      "contentHash": "42b8841e0df4c646741956eca31f5e5b",
+      "lastModificationDate": 1689199585053,
+      "contentHash": "1829469fac1e974b8af7a07b1cdfa740",
       "sourceName": "contracts/claim/abstract/CrosschainDistributor.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4609,8 +4610,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/CrosschainTrancheVestingMerkle.sol": {
-      "lastModificationDate": 1688866833340,
-      "contentHash": "a90f72fdbd27aad966705b210c82c0ae",
+      "lastModificationDate": 1689199585049,
+      "contentHash": "1d349817b78db13204faf98664d74446",
       "sourceName": "contracts/claim/CrosschainTrancheVestingMerkle.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4660,8 +4661,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/CrosschainContinuousVestingMerkle.sol": {
-      "lastModificationDate": 1688866833339,
-      "contentHash": "b2ed9b4d6ba222c92b24e380e6906626",
+      "lastModificationDate": 1689199585048,
+      "contentHash": "10e2af38c3868b6dc3524e14e2e224c5",
       "sourceName": "contracts/claim/CrosschainContinuousVestingMerkle.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4713,8 +4714,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/ContinuousVesting.sol": {
-      "lastModificationDate": 1688866833342,
-      "contentHash": "0b027fdfd3ec397ac400061342770091",
+      "lastModificationDate": 1689199585052,
+      "contentHash": "10d6075d881f3abd538e4c78a12d75c2",
       "sourceName": "contracts/claim/abstract/ContinuousVesting.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4805,8 +4806,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/ContinuousVestingMerkle.sol": {
-      "lastModificationDate": 1688866833339,
-      "contentHash": "964ba03dcb88159029f41f14aec8d19a",
+      "lastModificationDate": 1689199585048,
+      "contentHash": "2cfcf507d04298cb9c13fcaea6dae28f",
       "sourceName": "contracts/claim/ContinuousVestingMerkle.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4852,8 +4853,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/PriceTierVestingSale_2_0.sol": {
-      "lastModificationDate": 1688866833340,
-      "contentHash": "cb4bef775d6ab51e24e4f92add7d5e38",
+      "lastModificationDate": 1689199585050,
+      "contentHash": "672b34c3527ee736023e145dce3d473e",
       "sourceName": "contracts/claim/PriceTierVestingSale_2_0.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4903,8 +4904,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/abstract/PriceTierVesting.sol": {
-      "lastModificationDate": 1688866833343,
-      "contentHash": "ceb1e1384cc6dde123ecb1b950294643",
+      "lastModificationDate": 1689199585054,
+      "contentHash": "201735851cbcb3c88128c34400e33843",
       "sourceName": "contracts/claim/abstract/PriceTierVesting.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -4996,8 +4997,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/PriceTierVestingMerkle.sol": {
-      "lastModificationDate": 1688866833340,
-      "contentHash": "bf43c9565fd095033ec1af1ff3f9311e",
+      "lastModificationDate": 1689199585049,
+      "contentHash": "11e42beb989ecfc739edf731b5bb6726",
       "sourceName": "contracts/claim/PriceTierVestingMerkle.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -5044,8 +5045,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/TrancheVestingSale_1_3.sol": {
-      "lastModificationDate": 1688866833341,
-      "contentHash": "9301860abf7d84ba5fee56551894144c",
+      "lastModificationDate": 1689199585051,
+      "contentHash": "02fd859d87d992ad7bd0617586c56702",
       "sourceName": "contracts/claim/TrancheVestingSale_1_3.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -5141,8 +5142,8 @@
       ]
     },
     "/Users/c/git/dao-contracts/contracts/claim/TrancheVestingMerkle.sol": {
-      "lastModificationDate": 1688866833341,
-      "contentHash": "00485a1914ecabdcb081e7e9b36ab6ba",
+      "lastModificationDate": 1689199585051,
+      "contentHash": "2703ef8a378363624d7dd404a5192850",
       "sourceName": "contracts/claim/TrancheVestingMerkle.sol",
       "solcConfig": {
         "version": "0.8.16",
@@ -5544,6 +5545,49 @@
       ],
       "artifacts": [
         "BatchSendEth"
+      ]
+    },
+    "/Users/c/git/dao-contracts/contracts/utilities/FairQueue.sol": {
+      "lastModificationDate": 1689199585062,
+      "contentHash": "274367cf9f73188ec6a9809ca516c35b",
+      "sourceName": "contracts/utilities/FairQueue.sol",
+      "solcConfig": {
+        "version": "0.8.16",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.16"
+      ],
+      "artifacts": [
+        "FairQueue"
       ]
     }
   }

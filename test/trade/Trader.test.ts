@@ -25,7 +25,7 @@ const getBalance = async (signer: SignerWithAddress): Promise<bigint> => {
   return BigInt((await ethers.provider.getBalance(signer.address)).toString())
 }
 
-describe.skip("Trader", function () {
+describe("Trader", function () {
   beforeAll(async () => {
     // We will use these accounts for testing
     [deployer, maker, taker, feeRecipient, randomSigner, pool ] = await ethers.getSigners();

@@ -35,10 +35,12 @@ import { ECDSA } from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
  * https://docs.connext.network/developers/guides/authentication).
  */
 abstract contract CrosschainMerkleDistributor is CrosschainDistributor, MerkleSet {
+  event Foo(address bar);
   constructor(
     IConnext _connext,
-    bytes32 _merkleRoot
-  ) CrosschainDistributor(_connext) MerkleSet(_merkleRoot) {}
+    bytes32 _merkleRoot,
+    uint256 _total
+  ) CrosschainDistributor(_connext, _total) MerkleSet(_merkleRoot) {}
 
   /// @dev public method to initialize a distribution record: requires a valid merkle proof
   function initializeDistributionRecord(

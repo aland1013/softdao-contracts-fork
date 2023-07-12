@@ -2,6 +2,9 @@
 
 require("hardhat-deploy");
 
+// generate typescript types upon compilation
+require("@typechain/hardhat");
+
 // this allows hardhat to use ethers for tests
 require("@nomiclabs/hardhat-ethers");
 

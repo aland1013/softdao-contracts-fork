@@ -18,8 +18,10 @@ abstract contract TrancheVesting is AdvancedDistributor, ITrancheVesting {
     uint256 _total,
     string memory _uri,
     uint256 _voteFactor,
-    Tranche[] memory _tranches
-  ) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000) {
+    Tranche[] memory _tranches,
+    uint160 _maxDelayTime,
+    uint160 _salt
+  ) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000, _maxDelayTime, _salt) {
     // tranches can be set in the constructor or in setTranches()
     _setTranches(_tranches);
   }
@@ -31,14 +33,15 @@ abstract contract TrancheVesting is AdvancedDistributor, ITrancheVesting {
 	* After the last tranche time, the vested fraction will be the fraction denominator.
 	*/
   function getVestedFraction(
-    address /*beneficiary*/,
+    address beneficiary,
     uint256 time
   ) public view override returns (uint256) {
+    uint256 delay = getFairDelayTime(beneficiary);
     for (uint256 i = tranches.length; i != 0; ) {
       unchecked {
         --i;
       }
-      if (time > tranches[i].time) {
+      if (time - delay > tranches[i].time) {
         return tranches[i].vestedFraction;
       }
     }

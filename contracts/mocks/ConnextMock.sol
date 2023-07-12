@@ -37,7 +37,10 @@ contract ConnextMock {
         uint256 _slippage,
         bytes calldata _callData
     ) public payable returns (bytes32) {
-        // nothing to do
+        // Transfer asset if needed
+        if (_amount > 0) {
+            IERC20(_asset).transferFrom(msg.sender, address(this), _amount);
+        }
         
         // Emit event + return identifier
         emit XCalled(_destination, _to, _asset, _delegate, _amount, _slippage, _callData);

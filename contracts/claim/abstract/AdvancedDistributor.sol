@@ -9,6 +9,7 @@ import { Distributor, DistributionRecord, IERC20 } from './Distributor.sol';
 import { IAdjustable } from '../../interfaces/IAdjustable.sol';
 import { IVoting } from '../../interfaces/IVoting.sol';
 import { Sweepable } from '../../utilities/Sweepable.sol';
+import { FairQueue } from '../../utilities/FairQueue.sol';
 
 /**
  * @title AdvancedDistributor
@@ -40,7 +41,8 @@ abstract contract AdvancedDistributor is
   ERC20Votes,
   Distributor,
   IAdjustable,
-  IVoting
+  IVoting,
+  FairQueue
 {
   using SafeERC20 for IERC20;
 
@@ -51,12 +53,15 @@ abstract contract AdvancedDistributor is
     uint256 _total,
     string memory _uri,
     uint256 _voteFactor,
-    uint256 _fractionDenominator
+    uint256 _fractionDenominator,
+    uint160 maxDelayTime,
+    uint160 salt
   )
     Distributor(_token, _total, _uri, _fractionDenominator)
     ERC20Permit('Internal vote tracker')
     ERC20('Internal vote tracker', 'IVT')
     Sweepable(payable(msg.sender))
+    FairQueue(maxDelayTime, salt)
   {
     voteFactor = _voteFactor;
     emit SetVoteFactor(voteFactor);
@@ -124,17 +129,26 @@ abstract contract AdvancedDistributor is
     emit Adjust(beneficiary, amount);
   }
 
-  // Set the token being distributed
-  function setToken(IERC20 _token) external onlyOwner {
+
+  function _setToken(IERC20 _token) internal virtual {
     require(address(_token) != address(0), 'token is address(0)');
     token = _token;
     emit SetToken(token);
   }
 
-  // Set the total to distribute
-  function setTotal(uint256 _total) external onlyOwner {
+  // Set the token being distributed
+  function setToken(IERC20 _token) external virtual onlyOwner {
+    _setToken(_token);
+  }
+
+  function _setTotal(uint256 _total) internal virtual {
     total = _total;
     emit SetTotal(total);
+  }
+
+  // Set the total to distribute
+  function setTotal(uint256 _total) external virtual onlyOwner {
+    _setTotal(_total);
   }
 
   // Set the distributor metadata URI

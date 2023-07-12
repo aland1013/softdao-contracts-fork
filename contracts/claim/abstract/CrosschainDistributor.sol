@@ -22,9 +22,40 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
     _;
   }
 
-  constructor(IConnext _connext) {
+  constructor(IConnext _connext, uint256 _total) {
     connext = _connext;
     domain = uint32(_connext.domain());
+    _allowConnext(_total);
+  }
+
+  /**
+  @dev allows Connext to withdraw tokens for cross-chain settlement. Connext may withdraw up to
+  the remaining quantity of tokens that can be claimed - the allowance must be set for cross-chain claims.
+  */
+  function _allowConnext(uint256 amount) internal {
+    token.safeApprove(address(connext), amount);
+  }
+
+  /** Reset Connext allowance when total is updated */
+  function _setTotal(uint256 _total) internal virtual override onlyOwner {
+    // effects
+    super._setTotal(_total);
+    // interactions
+    _allowConnext(total - claimed);
+  }
+
+  /** Reset Connext allowance when token is updated */
+  function _setToken(IERC20 _token) internal virtual override nonReentrant onlyOwner {
+    // interaction before effect!
+    // decrease allowance on old token
+    _allowConnext(0);
+
+    // effect
+    super._setToken(_token);
+
+    // interactions
+    // increase allowance on new token
+    _allowConnext(total - claimed);
   }
 
   /**

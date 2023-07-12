@@ -26,10 +26,21 @@ contract CrosschainContinuousVestingMerkle is CrosschainMerkleDistributor, Conti
     uint256 _start,
     uint256 _cliff,
     uint256 _end,
-    bytes32 _merkleRoot
+    bytes32 _merkleRoot,
+    uint160 _maxDelayTime // the maximum delay time for the fair queue
   )
-    CrosschainMerkleDistributor(_connext, _merkleRoot)
-    ContinuousVesting(_token, _total, _uri, _voteFactor, _start, _cliff, _end)
+    CrosschainMerkleDistributor(_connext, _merkleRoot, _total)
+    ContinuousVesting(
+      _token,
+      _total,
+      _uri,
+      _voteFactor,
+      _start,
+      _cliff,
+      _end,
+      _maxDelayTime,
+      uint160(uint256(_merkleRoot))
+    )
   {}
 
   // every distributor must provide a name method
@@ -37,9 +48,16 @@ contract CrosschainContinuousVestingMerkle is CrosschainMerkleDistributor, Conti
     return 'CrosschainContinuousVestingMerkle';
   }
 
-
   // every distributor must provide a version method
   function VERSION() external pure override(Distributor, IDistributor) returns (uint256) {
     return 1;
+  }
+
+  function _setToken(IERC20 _token) internal override(AdvancedDistributor, CrosschainDistributor) {
+    super._setToken(_token);
+  }
+
+  function _setTotal(uint256 _total) internal override(AdvancedDistributor, CrosschainDistributor) {
+    super._setTotal(_total);
   }
 }
