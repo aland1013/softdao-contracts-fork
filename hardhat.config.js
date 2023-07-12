@@ -8,6 +8,9 @@ require("@typechain/hardhat");
 // this allows hardhat to use ethers for tests
 require("@nomiclabs/hardhat-ethers");
 
+// allow upgradeable contracts in tests
+// require('@openzeppelin/hardhat-upgrades');
+
 // this allows hardhat to use jest for tests
 require("hardhat-jest-plugin");
 
