@@ -1,8 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
-import { ethers } from 'hardhat'
+import hre from 'hardhat'
 import { GenericERC20, TrancheVestingMerkle__factory, TrancheVestingMerkle, ERC20, GenericERC20__factory } from "../../typechain-types";
 import { lastBlockTime } from "../lib";
+const ethers = (hre as any).ethers
 
 jest.setTimeout(30000);
 
@@ -148,7 +149,8 @@ describe("TrancheVestingMerkle", function () {
       config.uri,
       config.votingFactor,
       unvestedTranches,
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     );
 
     // deploy another distributor that is mid-vesting
@@ -158,7 +160,8 @@ describe("TrancheVestingMerkle", function () {
       config.uri,
       config.votingFactor,
       partiallyVestedTranches,
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     );
 
     fullyVestedDistributor = await DistributorFactory.deploy(
@@ -167,7 +170,8 @@ describe("TrancheVestingMerkle", function () {
       config.uri,
       config.votingFactor,
       fullyVestedTranches,
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     );
 
     // transfer tokens to the distributors
@@ -246,7 +250,7 @@ describe("TrancheVestingMerkle", function () {
     const myDistributor = await ethers.getContractAt("TrancheVestingMerkle", distributor.address, user);
     await myDistributor.delegate(user.address)
     
-    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * (distributionRecord.total.toBigInt() - distributionRecord.claimed.toBigInt()))
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(distributionRecord.total.toBigInt() - distributionRecord.claimed.toBigInt()))
     expect((await token.balanceOf(user.address)).toBigInt()).toEqual(claimable)
 
     // the distributor metrics are now updated
@@ -298,7 +302,7 @@ describe("TrancheVestingMerkle", function () {
     expect(distributionRecord.initialized).toEqual(true)
     expect(distributionRecord.claimed.toBigInt()).toEqual(claimable)
     // only unclaimed tokens provide voting power from the distributor
-    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * (distributionRecord.total.toBigInt() - distributionRecord.claimed.toBigInt()))
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(distributionRecord.total.toBigInt() - distributionRecord.claimed.toBigInt()))
     // the user now has a balance
     expect((await token.balanceOf(user.address)).toBigInt()).toEqual(claimable)
   })
@@ -421,7 +425,8 @@ describe("TrancheVestingMerkle", function () {
         {time: 1, vestedFraction: 1},
         {time: 2, vestedFraction: 9999}
       ],
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     )).rejects.toMatchObject(
       {message: expect.stringMatching(/last tranche must vest all tokens/)}
     )
@@ -437,7 +442,8 @@ describe("TrancheVestingMerkle", function () {
         {time: 1, vestedFraction: 2},
         {time: 3, vestedFraction: 10000}
       ],
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     )).rejects.toMatchObject(
       {message: expect.stringMatching(/tranche time must increase/)}
     )
@@ -453,7 +459,8 @@ describe("TrancheVestingMerkle", function () {
         {time: 2, vestedFraction: 1},
         {time: 3, vestedFraction: 10000}
       ],
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     )).rejects.toMatchObject(
       {message: expect.stringMatching(/tranche vested fraction must increase/)}
     )
@@ -466,7 +473,8 @@ describe("TrancheVestingMerkle", function () {
         config.uri,
         config.votingFactor,
         partiallyVestedTranches,
-        config.proof.merkleRoot
+        config.proof.merkleRoot,
+        0
       )
     ).rejects.toMatchObject(
       { message: expect.stringMatching(/Distributor: total is 0/) }
@@ -482,7 +490,8 @@ describe("TrancheVestingMerkle", function () {
         // oops - time in milliseconds
         {time: new Date().getTime(), vestedFraction: 10000}
       ],
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     )).rejects.toMatchObject(
       {message: expect.stringMatching(/vesting ends after 4102444800/)}
     )

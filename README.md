@@ -4,8 +4,6 @@
 * Install: `yarn`
 * Testing: `yarn chain` + `yarn test`
 
-Important: *run tests on a fresh chain to see what they should do.* I minimized an internal repo to create this one and due to some dependency changes I believe the tests are running into some race conditions and/or contract reuse when run multiple times on the same chain that aren't present in our internal repo.
-
 ## About the cross-chain distributor
 The two contracts that will be used in conjunction are `Satellite.sol` and `CrosschainTrancheVestingMerkle.sol`. Together, they allow an admin to set up an airdrop across multiple chains. We can safely assume that the Distributor contract owner is a trusted party.
 

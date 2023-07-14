@@ -1,9 +1,11 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
-import { ethers } from 'hardhat'
+import hre from 'hardhat'
 import { GenericERC20, CrosschainTrancheVestingMerkle__factory, CrosschainTrancheVestingMerkle, ERC20, GenericERC20__factory, IConnext, Satellite__factory, Satellite, ConnextMock__factory, ConnextMock } from "../../typechain-types";
 import { lastBlockTime } from "../lib";
 import SatelliteDefinition from '../../artifacts/contracts/claim/Satellite.sol/Satellite.json'
+
+const ethers = (hre as any).ethers
 
 jest.setTimeout(30000);
 
@@ -178,7 +180,8 @@ describe("CrosschainTrancheVestingMerkle", function () {
       config.uri,
       config.votingFactor,
       tranches,
-      config.proof.merkleRoot
+      config.proof.merkleRoot,
+      0
     );
 
     SatelliteFactory = await ethers.getContractFactory("Satellite", deployer);

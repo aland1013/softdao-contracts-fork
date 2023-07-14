@@ -23,7 +23,6 @@ import { MerkleSet } from './abstract/MerkleSet.sol';
 
 contract Satellite is MerkleSet {
   // ========== Events ===========
-
   /**
    * @notice Emitted when a claim is initiated
    * @param id The transfer id for sending claim to distributor

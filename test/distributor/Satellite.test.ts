@@ -1,8 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ethers } from 'hardhat'
+import hre from "hardhat"
 import { GenericERC20, Satellite, ConnextMock } from "../../typechain-types";
 import { lastBlockTime } from "../lib";
 import SatelliteDefinition from '../../artifacts/contracts/claim/Satellite.sol/Satellite.json'
+
+const ethers = (hre as any).ethers
 
 jest.setTimeout(30000);
 

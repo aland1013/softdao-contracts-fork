@@ -1,9 +1,10 @@
 import { ContractTransaction } from 'ethers'
-import { ethers } from 'hardhat'
+import hre from 'hardhat'
 import { GovernorMultiSourceUpgradeable } from '../typechain-types'
 import { ProposalCreatedEvent } from '../typechain-types/contracts/governance/GovernorMultiSourceUpgradeable'
 import { NewSaleEvent } from '../typechain-types/contracts/sale/v2/FlatPriceSaleFactory'
-// import { TrancheVesting, TrancheVestingSale_1_3_Distributor } from '../typechain-types';
+
+const ethers = (hre as any).ethers
 
 export const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545")
 
@@ -30,7 +31,7 @@ export const getGovernorProposalId = async (tx: ContractTransaction) => {
 
   for (let e of receipt.events!) {
     if (e.event == 'ProposalCreated') {
-      const proposalCreatedEvent = e as ProposalCreatedEvent
+      const proposalCreatedEvent = e as any
       return proposalCreatedEvent.args[0]
     }
   }
