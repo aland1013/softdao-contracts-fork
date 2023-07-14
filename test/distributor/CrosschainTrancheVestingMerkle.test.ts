@@ -2,8 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import hre from 'hardhat'
 import { GenericERC20, CrosschainTrancheVestingMerkle__factory, CrosschainTrancheVestingMerkle, ERC20, GenericERC20__factory, IConnext, Satellite__factory, Satellite, ConnextMock__factory, ConnextMock } from "../../typechain-types";
-import { lastBlockTime } from "../lib";
 import SatelliteDefinition from '../../artifacts/contracts/claim/Satellite.sol/Satellite.json'
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 const ethers = (hre as any).ethers
 
@@ -136,6 +136,10 @@ const config: Config = {
 
 describe("CrosschainTrancheVestingMerkle", function () {
   beforeAll(async () => {
+    // kick off a transaction to update the block time
+    let now = BigInt(await time.latest()) + 10000n;
+    await time.increaseTo(now);
+
     [deployer, eligible1, eligible2, eligible3, ineligible] = await ethers.getSigners();
 
     const GenericERC20Factory = await ethers.getContractFactory("GenericERC20", deployer);
@@ -163,13 +167,11 @@ describe("CrosschainTrancheVestingMerkle", function () {
       2 // desination domain
     );
     
-    // get the last block time after a recent transaction to make sure it is recent
-    let now = await lastBlockTime();
-    
+    // 50% of tokens should be vested
     tranches = [
       {time: now - 100n, vestedFraction: 1000n},
-      {time: now - 50n, vestedFraction: 5000n},
-      {time: now - 10n, vestedFraction: 10000n},
+      {time: now - 1n, vestedFraction: 5000n},
+      {time: now + 100n, vestedFraction: 10000n},
     ]
     
     DistributorFactory = await ethers.getContractFactory("CrosschainTrancheVestingMerkle", deployer);
@@ -297,14 +299,16 @@ describe("CrosschainTrancheVestingMerkle", function () {
       proof
     )
 
+    const now = BigInt(await time.latest());
+
     balance = await token.balanceOf(user.address)
-    expect(balance.toBigInt()).toEqual(BigInt(amount))
+    expect(balance.toBigInt()).toEqual(BigInt(amount) / 2n)
 
     const distributionRecord = await distributor.getDistributionRecord(user.address)
 
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
     expect(distributionRecord.initialized).toEqual(true)
-    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount))
+    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount)/ 2n)
 
     // check that user can't claim again
     await expect(distributor.connect(user).claimBySignature(
@@ -341,13 +345,13 @@ describe("CrosschainTrancheVestingMerkle", function () {
     )
 
     const balance = await token.balanceOf(user.address)
-    expect(balance.toBigInt()).toEqual(BigInt(amount))
+    expect(balance.toBigInt()).toEqual(BigInt(amount) / 2n)
 
     const distributionRecord = await distributor.getDistributionRecord(user.address)
 
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
     expect(distributionRecord.initialized).toEqual(true)
-    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount))
+    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount)/2n)
   })
 
   it("Ineligible user cannot claim", async () => {
@@ -418,7 +422,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
     
     expect(distributionRecord.initialized).toEqual(true)
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
-    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount))
+    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount) / 2n)
     // tokens were not claimed to this chain
     expect((await token.balanceOf(user.address)).toBigInt()).toEqual(0n)
   })

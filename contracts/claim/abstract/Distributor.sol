@@ -74,7 +74,7 @@ abstract contract Distributor is IDistributor, ReentrancyGuard {
       // re-initialize if the total has been updated
       _initializeDistributionRecord(beneficiary, totalAmount);
     }
-
+    
     uint120 claimableAmount = uint120(getClaimableAmount(beneficiary));
     require(claimableAmount > 0, 'Distributor: no more tokens claimable right now');
 

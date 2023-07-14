@@ -2,7 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import hre from 'hardhat'
 import { GenericERC20, TrancheVestingMerkle__factory, TrancheVestingMerkle, ERC20, GenericERC20__factory } from "../../typechain-types";
-import { lastBlockTime } from "../lib";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
+
 const ethers = (hre as any).ethers
 
 jest.setTimeout(30000);
@@ -108,6 +109,10 @@ const config: Config = {
 
 describe("TrancheVestingMerkle", function () {
   beforeAll(async () => {
+    // kick off a transaction to update the block time
+    let now = BigInt(await time.latest()) + 1n;
+    await time.increaseTo(now);
+
     [deployer, eligible1, eligible2, ineligible] = await ethers.getSigners();
 
     const GenericERC20Factory = await ethers.getContractFactory("GenericERC20", deployer);
@@ -122,7 +127,6 @@ describe("TrancheVestingMerkle", function () {
     DistributorFactory = await ethers.getContractFactory("TrancheVestingMerkle", deployer);
 
     // get the last block time after a recent transaction to make sure it is recent
-    let now = await lastBlockTime();
 
     unvestedTranches = [
       {time: now + 100n, vestedFraction: 1000n},
@@ -232,7 +236,6 @@ describe("TrancheVestingMerkle", function () {
 
     const [index, beneficiary, amount] = config.proof.claims[user.address].data.map(d => d.value)
     const proof = config.proof.claims[user.address].proof
-
 
     await distributor.claim(index, beneficiary, amount, proof)
 
@@ -413,7 +416,7 @@ describe("TrancheVestingMerkle", function () {
   });
 
   it("reverts on misconfiguration during deployment", async () => {
-    let now = await lastBlockTime();
+    let now = await time.latest();
 
     // must vest all tokens
     await expect(DistributorFactory.deploy(
@@ -498,7 +501,7 @@ describe("TrancheVestingMerkle", function () {
   })
 
   // TODO: why is this causing the node to stop entirely?
-  it.skip("correctly sets tranches after deployment", async () => {
+  it("correctly sets tranches after deployment", async () => {
     const distributor = unvestedDistributor
 
     const checkSomeTranches = async tranches => {

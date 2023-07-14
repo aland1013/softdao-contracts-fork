@@ -3,6 +3,7 @@ import hre from 'hardhat'
 import { GovernorMultiSourceUpgradeable } from '../typechain-types'
 import { ProposalCreatedEvent } from '../typechain-types/contracts/governance/GovernorMultiSourceUpgradeable'
 import { NewSaleEvent } from '../typechain-types/contracts/sale/v2/FlatPriceSaleFactory'
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 const ethers = (hre as any).ethers
 
@@ -51,13 +52,6 @@ export const fillEmptyBlock = async (nBlocks: number | bigint = 1n) => {
   }
 }
 
-// get the time of the last mined block in seconds according to the blockchain
-export const lastBlockTime = async () => {
-  const blockNumber = await provider.getBlockNumber();
-  const latestBlock = await provider.getBlock(blockNumber);
-  return BigInt(latestBlock.timestamp);
-};
-
 // wait for a certain # of milliseconds
 export const delay = ms => new Promise(res => setTimeout(res, ms))
 
@@ -74,7 +68,7 @@ type TrancheStruct = {
 export const makeUniformTranches = async (trancheCount = 48n, trancheDelay = 3600n, startTime?: bigint) => {
   // creates a uniform vesting schedule
   if (!startTime) {
-    startTime = await lastBlockTime()
+    startTime = BigInt(await time.latest())
   }
 	let tranches: TrancheStruct[] = []
 

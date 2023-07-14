@@ -1,7 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import hre from "hardhat"
 import { GenericERC20, Satellite, ConnextMock } from "../../typechain-types";
-import { lastBlockTime } from "../lib";
 import SatelliteDefinition from '../../artifacts/contracts/claim/Satellite.sol/Satellite.json'
 
 const ethers = (hre as any).ethers

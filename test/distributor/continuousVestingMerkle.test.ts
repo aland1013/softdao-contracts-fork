@@ -2,9 +2,10 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import hre from 'hardhat'
 import { GenericERC20, ContinuousVestingMerkle__factory, ContinuousVestingMerkle } from "../../typechain-types";
-import { delay, lastBlockTime, expectCloseEnough } from "../lib";
+import { delay, expectCloseEnough } from "../lib";
 import { merkleRoots, campaignCIDs } from '../../config'
 import { buildIpfsUri } from '../../utils'
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 const ethers = (hre as any).ethers
 
@@ -105,7 +106,7 @@ const config: Config = {
 
 const estimateClaimableTokens = (now: bigint, start: bigint, cliff: bigint, end: bigint, total: bigint) => {
   if (now < start || now < cliff) {
-    return 0n
+  return 0n
   }
 
   if (now > end) {
@@ -115,7 +116,7 @@ const estimateClaimableTokens = (now: bigint, start: bigint, cliff: bigint, end:
   return total * (now - start) / (end - start)
 }
 
-describe.skip("ContinuousVestingMerkle", function () {
+describe("ContinuousVestingMerkle", function () {
   beforeAll(async () => {
     [deployer, eligible1, eligible2, ineligible] = await ethers.getSigners();
 
@@ -131,7 +132,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     DistributorFactory = await ethers.getContractFactory("ContinuousVestingMerkle", deployer);
 
     // get the last block time after a recent transaction to make sure it is recent
-    let now = await lastBlockTime();
+    let now = BigInt(await time.latest());
 
     unvestedTimes = [
       now - 10000n, // start time 10000 seconds ago
@@ -251,7 +252,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     await distributor.claim(index, beneficiary, amount, proof)
 
     let estimatedClaimable = estimateClaimableTokens(
-      await lastBlockTime(),
+      BigInt(await time.latest()),
       ...partiallyVestedTimes,
       BigInt(config.proof.claims[user.address].data[2].value)
     )
@@ -328,7 +329,7 @@ describe.skip("ContinuousVestingMerkle", function () {
 
     // now we claim!
     await distributor.claim(index, beneficiary, amount, proof)
-    const estimatedClaimable = estimateClaimableTokens(await lastBlockTime(), ...partiallyVestedTimes, BigInt(amount))
+    const estimatedClaimable = estimateClaimableTokens(BigInt(await time.latest()), ...partiallyVestedTimes, BigInt(amount))
 
     distributionRecord = await distributor.getDistributionRecord(user.address)
 
@@ -476,7 +477,7 @@ describe.skip("ContinuousVestingMerkle", function () {
   });
 
   it("reverts on misconfiguration during deployment", async () => {
-    let now = await lastBlockTime();
+    let now = BigInt(await time.latest());
 
     // cliff before start
     await expect(
@@ -514,7 +515,7 @@ describe.skip("ContinuousVestingMerkle", function () {
   });
 
   it('total to distribute must be > 0', async () => {
-    let now = await lastBlockTime();
+    let now = BigInt(await time.latest());
 
     await expect(
       DistributorFactory.deploy(
@@ -615,7 +616,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     expect(eligible2.address).toEqual('0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC')
     expect(ineligible.address).toEqual('0x90F79bf6EB2c4f870365E785982E1f101E93b906')
 
-    let now = await lastBlockTime();
+    let now = BigInt(await time.latest());
 
     // deploy a distributor with the default config that is mid-distribution
     const distributor = await DistributorFactory.deploy(
@@ -640,7 +641,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     let proof = config.proof.claims[user.address].proof
 
     let estimatedClaimable = estimateClaimableTokens(
-      await lastBlockTime(),
+      BigInt(await time.latest()),
       ...partiallyVestedTimes,
       BigInt(config.proof.claims[user.address].data[2].value)
     )
@@ -765,7 +766,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     await distributor.claim(index, beneficiary, amount, proof)
 
     estimatedClaimable = estimateClaimableTokens(
-      await lastBlockTime(),
+      BigInt(await time.latest()),
       ...partiallyVestedTimes,
       BigInt(updatedProof.claims[user.address].data[2].value)
     )
@@ -792,7 +793,7 @@ describe.skip("ContinuousVestingMerkle", function () {
     await distributor.claim(index, beneficiary, amount, proof)
 
     estimatedClaimable = estimateClaimableTokens(
-      await lastBlockTime(),
+      BigInt(await time.latest()),
       ...partiallyVestedTimes,
       BigInt(updatedProof.claims[user.address].data[2].value)
     )
