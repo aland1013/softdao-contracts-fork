@@ -19,7 +19,7 @@ contract FairQueue {
    * @dev the random value from which a distance will be calculated for each address. Reset the random value
    * to shuffle the delays for all addresses.
    */
-  uint160 private randomValue;
+  uint160 public randomValue;
 
   constructor(uint160 _maxDelayTime, uint160 salt) {
     _setDelay(_maxDelayTime);

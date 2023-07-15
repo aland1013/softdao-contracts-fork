@@ -188,13 +188,6 @@ describe("ContinuousVestingMerkle", function () {
     await token.transfer(partiallyVestedDistributor.address, await partiallyVestedDistributor.total())
     await token.transfer(unvestedDistributor.address, await unvestedDistributor.total())
     await token.transfer(fullyVestedDistributor.address, await fullyVestedDistributor.total())
-
-    console.log('***', {
-      eligible1: eligible1.address,
-      eligible2: eligible2.address,
-      ineligible: ineligible.address
-    })
-    
   });
 
   it("Metadata is correct", async () => {

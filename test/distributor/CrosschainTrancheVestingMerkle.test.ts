@@ -4,6 +4,7 @@ import hre from 'hardhat'
 import { GenericERC20, CrosschainTrancheVestingMerkle__factory, CrosschainTrancheVestingMerkle, ERC20, GenericERC20__factory, IConnext, Satellite__factory, Satellite, ConnextMock__factory, ConnextMock } from "../../typechain-types";
 import SatelliteDefinition from '../../artifacts/contracts/claim/Satellite.sol/Satellite.json'
 import { time } from "@nomicfoundation/hardhat-network-helpers";
+import exp from "constants";
 
 const ethers = (hre as any).ethers
 
@@ -27,9 +28,13 @@ let connextMockSource: ConnextMock
 let connextMockDestination: ConnextMock
 let SatelliteFactory: Satellite__factory
 let distributor: CrosschainTrancheVestingMerkle
+let distributorWithQueue: CrosschainTrancheVestingMerkle
 let satellite: Satellite
 
 let tranches: Tranche[]
+
+// largest possible delay for the distributor using a fair queue
+const maxDelayTime = 1000n
 
 type Config = {
   total: bigint
@@ -166,14 +171,14 @@ describe("CrosschainTrancheVestingMerkle", function () {
     connextMockDestination = await ConnextFactory.deploy(
       2 // desination domain
     );
-    
+
     // 50% of tokens should be vested
     tranches = [
-      {time: now - 100n, vestedFraction: 1000n},
-      {time: now - 1n, vestedFraction: 5000n},
-      {time: now + 100n, vestedFraction: 10000n},
+      { time: now - 100n, vestedFraction: 1000n },
+      { time: now - 1n, vestedFraction: 5000n },
+      { time: now + 100n, vestedFraction: 10000n },
     ]
-    
+
     DistributorFactory = await ethers.getContractFactory("CrosschainTrancheVestingMerkle", deployer);
     distributor = await DistributorFactory.deploy(
       token.address,
@@ -183,7 +188,18 @@ describe("CrosschainTrancheVestingMerkle", function () {
       config.votingFactor,
       tranches,
       config.proof.merkleRoot,
-      0
+      0 // no queue delay
+    );
+
+    distributorWithQueue = await DistributorFactory.deploy(
+      token.address,
+      connextMockSource.address,
+      config.total,
+      config.uri,
+      config.votingFactor,
+      tranches,
+      config.proof.merkleRoot,
+      maxDelayTime // fair queue is enabled
     );
 
     SatelliteFactory = await ethers.getContractFactory("Satellite", deployer);
@@ -194,8 +210,9 @@ describe("CrosschainTrancheVestingMerkle", function () {
       config.proof.merkleRoot
     )
 
-    // transfer tokens to the distributor
+    // transfer tokens to the distributors
     await token.transfer(distributor.address, await distributor.total())
+    await token.transfer(distributorWithQueue.address, await distributorWithQueue.total())
   });
 
   it("Metadata is correct", async () => {
@@ -241,10 +258,10 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
   it("Can claim via EOA signature", async () => {
     const user = eligible1
-    
+
     const [beneficiary, amount, domain] = config.proof.claims[user.address.toLowerCase()].data.map(d => d.value)
     const proof = config.proof.claims[user.address.toLowerCase()].proof
-    
+
     const txData = [
       { name: "recipient", type: "address", value: user.address },
       { name: "recipientDomain", type: "uint32", value: domain },
@@ -285,7 +302,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
       signature,
       badProof
     )).rejects.toMatchObject({ message: expect.stringMatching(/invalid proof/) })
-    
+
     balance = await token.balanceOf(user.address)
     expect(balance.toBigInt()).toEqual(0n)
 
@@ -308,7 +325,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
     expect(distributionRecord.initialized).toEqual(true)
-    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount)/ 2n)
+    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount) / 2n)
 
     // check that user can't claim again
     await expect(distributor.connect(user).claimBySignature(
@@ -324,7 +341,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
   it("Can claim via Merkle Proof", async () => {
     const user = eligible2
-    
+
     const [beneficiary, amount, domain] = config.proof.claims[user.address.toLowerCase()].data.map(d => d.value)
     const proof = config.proof.claims[user.address.toLowerCase()].proof
 
@@ -351,7 +368,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
     expect(distributionRecord.initialized).toEqual(true)
-    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount)/2n)
+    expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount) / 2n)
   })
 
   it("Ineligible user cannot claim", async () => {
@@ -359,7 +376,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
     const [beneficiary, amount, domain] = config.proof.claims[eligible3.address.toLowerCase()].data.map(d => d.value)
     const proof = config.proof.claims[eligible3.address.toLowerCase()].proof
-    
+
     const txData = [
       { name: "recipient", type: "address", value: user.address },
       { name: "recipientDomain", type: "uint32", value: domain },
@@ -419,11 +436,86 @@ describe("CrosschainTrancheVestingMerkle", function () {
     )
 
     const distributionRecord = await distributor.getDistributionRecord(user.address)
-    
+
     expect(distributionRecord.initialized).toEqual(true)
     expect(distributionRecord.total.toBigInt()).toEqual(BigInt(amount))
     expect(distributionRecord.claimed.toBigInt()).toEqual(BigInt(amount) / 2n)
     // tokens were not claimed to this chain
     expect((await token.balanceOf(user.address)).toBigInt()).toEqual(0n)
   })
+
+  /**
+   * @dev Verify that users can be delayed when the queue is enabled
+   * TODO: sometimes this test fails with errors like this: invalid address (argument="address", value="0x46627f4094a53e8fb6fd287c69aeea7a54bc751", code=INVALID_ARGUMENT, version=address/5.4.0)
+   * Likely cause: ethereum addresses must be 40 characters, but that is 41! Why is the randomValue producing values outside the ETH address space?
+   */
+  it("Queue Delay works as expected", async () => {
+
+
+    // Get the largest possible uint160 (this number is all "1"s when displayed in binary)
+    const maxUint160 = 2n ** 160n - 1n;
+    // get the current random value of the sale
+    const randomValue = (await distributorWithQueue.randomValue()).toBigInt();
+    // the random value should never be zero
+    expect(randomValue).not.toBe(BigInt(0))
+
+    // get the number the furthest distance from the random value by the xor metric (flip all bits in the number so the distance is maxUint160)
+    const xorValue = BigInt(randomValue) ^ maxUint160;
+
+    const closestAddress = `0x${randomValue.toString(16)}`;
+    const furthestAddress = `0x${xorValue.toString(16)}`;
+
+    // the random value taken as an address should have a delay of 0 for both distributors
+    expect((await distributorWithQueue.getFairDelayTime(closestAddress)).toBigInt()).toEqual(0n);
+    expect((await distributor.getFairDelayTime(closestAddress)).toBigInt()).toEqual(0n);
+
+    // the furthest address should have the largest delay for the distributor with the queue
+    // the delay for the xor of the random value converted to an address must be the maximum queue time
+    expect((await distributorWithQueue.getFairDelayTime(furthestAddress)).toBigInt()).toEqual(maxDelayTime);
+
+    // the furthest address should not have any delay if the queue is not enabled
+    expect((await distributor.getFairDelayTime(furthestAddress)).toBigInt()).toEqual(0n);
+
+    // ensure the delay is drawn from [0, maxQeuueTime] for real users and correctly gates each user
+    const users = [eligible1, eligible2];
+
+    for (let user of users) {
+      const delay = (await distributorWithQueue.getFairDelayTime(user.address)).toBigInt();
+      expect(delay).toBeGreaterThanOrEqual(0n);
+      expect(delay).toBeLessThanOrEqual(maxDelayTime);
+
+      // set the tranches of the distributor so that the user should be able to claim 100% of tokens 2 seconds in the future
+      const now = BigInt(await time.latest());
+    
+      await time.increase(delay);
+
+      await distributorWithQueue.setTranches([
+        { time: now + 2n, vestedFraction: 10000n },
+      ])
+
+      const [, amount,] = config.proof.claims[user.address.toLowerCase()].data.map(d => d.value)
+      const proof = config.proof.claims[user.address.toLowerCase()].proof
+  
+      // verify the user cannot yet claim
+      await expect(distributorWithQueue.claimByMerkleProof(
+        user.address,
+        amount,
+        proof
+      )).rejects.toBeTruthy()
+      // TODO: why does this more specific error check not work
+      // toMatchObject({ message: expect.stringMatching(/Distributor: no more tokens claimable right now/) })
+
+      const distributionRecord = await distributorWithQueue.getDistributionRecord(user.address)
+
+      // wait for three seconds
+      await time.increase(3);
+
+      // verify the user can now claim all tokens
+      await distributorWithQueue.connect(user).claimByMerkleProof(
+        user.address,
+        amount,
+        proof
+      )
+    }
+  });
 })

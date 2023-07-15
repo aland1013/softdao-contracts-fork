@@ -500,7 +500,6 @@ describe("TrancheVestingMerkle", function () {
     )
   })
 
-  // TODO: why is this causing the node to stop entirely?
   it("correctly sets tranches after deployment", async () => {
     const distributor = unvestedDistributor
 

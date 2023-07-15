@@ -81,7 +81,6 @@ export const makeUniformTranches = async (trancheCount = 48n, trancheDelay = 360
 			vestedFraction: ((i + 1n) * 10000n / trancheCount).toString()
     })
 	}
-  console.log({tranches})
 	return tranches
 }
 

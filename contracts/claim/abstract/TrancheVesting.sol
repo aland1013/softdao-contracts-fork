@@ -38,20 +38,16 @@ abstract contract TrancheVesting is AdvancedDistributor, ITrancheVesting {
     uint256 time
   ) public view override returns (uint256) {
     uint256 delay = getFairDelayTime(beneficiary);
-    console.log("address %s, getting vested fraction at time %s including delay", address(this), time, delay);
-    console.log("*** time compared to last tranche %s %s", time, tranches[tranches.length - 1].time);
     for (uint256 i = tranches.length; i != 0; ) {
       unchecked {
         --i;
       }
 
       if (time - delay > tranches[i].time) {
-        console.log("match: fraction at tranch %s of %s including delay %s", tranches[i].vestedFraction, fractionDenominator, getFairDelayTime(beneficiary));
         return tranches[i].vestedFraction;
       }
     }
 
-    console.log("fraction: %s of %s including delay %s", 0, fractionDenominator, getFairDelayTime(beneficiary));
     return 0;
   }
 
