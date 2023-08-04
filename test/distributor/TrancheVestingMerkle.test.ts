@@ -287,6 +287,7 @@ describe("TrancheVestingMerkle", function () {
       BigInt(config.proof.claims[user.address].data[2].value)
     )
 
+    // now the user has votes
     expect(distributionRecord.initialized).toEqual(true)
     expect(distributionRecord.claimed.toBigInt()).toEqual(0n)
     expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(amount))
@@ -294,8 +295,21 @@ describe("TrancheVestingMerkle", function () {
     // the user has no balance
     expect((await token.balanceOf(user.address)).toBigInt(),).toEqual(0n)
 
+    // the admin increases the voting factor
+    await distributor.setVoteFactor(1230000n)
+
     // now we claim!
     await distributor.claim(index, beneficiary, amount, proof)
+
+    // the voting factor has been updated by claiming (half of voting power remains at the 123x factor)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(123n * BigInt(amount) / 2n)
+
+    // the admin resets the voting factor
+    await distributor.setVoteFactor(config.votingFactor)
+
+    // the voting factor for this user can be fixed again
+    await distributor.initializeDistributionRecord(index, beneficiary, amount, proof)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(amount) / 2n)
 
     distributionRecord = await distributor.getDistributionRecord(user.address)
 
@@ -542,5 +556,7 @@ describe("TrancheVestingMerkle", function () {
     await distributor.setTranches(newTranches)
     await checkSomeTranches(newTranches)
   });
+
+  // users can still claim after the voting factor is updated
 
 })

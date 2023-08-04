@@ -737,7 +737,7 @@ describe("ContinuousVestingMerkle", function () {
     )
     expect(distributionRecord.initialized).toEqual(true);
 
-    // eligible1 still has 50% of their original voting power
+    // eligible1 still has 50% of their original voting power (see Sherlock 41: https://github.com/sherlock-audit/2023-06-tokensoft-judging/issues/55)
     await distributor.connect(eligible1).delegate(eligible1.address);
     expectCloseEnough(
       (await distributor.getVotes(user.address)).toBigInt(),

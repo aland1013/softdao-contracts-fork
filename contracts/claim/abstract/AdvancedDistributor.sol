@@ -74,12 +74,8 @@ abstract contract AdvancedDistributor is
     return (tokenAmount * voteFactor) / fractionDenominator;
   }
 
-  function _initializeDistributionRecord(
-    address beneficiary,
-    uint256 totalAmount
-  ) internal virtual override {
-    super._initializeDistributionRecord(beneficiary, totalAmount);
-
+  // Update voting power based on distribution record initialization or claims
+  function _reconcileVotingPower(address beneficiary, uint256 totalAmount) private {
     // current potential voting power
     uint256 currentVotes = balanceOf(beneficiary);
     // correct voting power after (re)initialization of distribution record based on the number of claimable tokens remaining
@@ -95,14 +91,20 @@ abstract contract AdvancedDistributor is
     }
   }
 
+  function _initializeDistributionRecord(
+    address beneficiary,
+    uint256 totalAmount
+  ) internal virtual override {
+    super._initializeDistributionRecord(beneficiary, totalAmount);
+    _reconcileVotingPower(beneficiary, totalAmount);
+  }
+
   function _executeClaim(
     address beneficiary,
     uint256 totalAmount
   ) internal virtual override returns (uint256 _claimed) {
     _claimed = super._executeClaim(beneficiary, totalAmount);
-
-    // reduce voting power through ERC20Votes extension
-    _burn(beneficiary, tokensToVotes(_claimed));
+    _reconcileVotingPower(beneficiary, totalAmount);
   }
 
   /**
