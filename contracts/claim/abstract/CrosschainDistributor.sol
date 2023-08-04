@@ -33,6 +33,7 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
   the remaining quantity of tokens that can be claimed - the allowance must be set for cross-chain claims.
   */
   function _allowConnext(uint256 amount) internal {
+    token.safeApprove(address(connext), 0);
     token.safeApprove(address(connext), amount);
   }
 
