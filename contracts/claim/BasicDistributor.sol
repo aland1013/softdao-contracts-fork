@@ -13,7 +13,7 @@ contract BasicDistributor is AdvancedDistributor {
 		uint256 _voteFactor, // voting power multiplier as fraction of fractionDenominator
 		address[] memory _recipients,
 		uint256[] memory _amounts
-	) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000) {
+	) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000, 0, uint160(uint256(blockhash(block.number - 1)))) {
 		require(_recipients.length == _amounts.length, "_recipients, _amounts different lengths");
 		uint256 _t;
 		for (uint256 i = _recipients.length; i != 0; ) {
@@ -40,10 +40,13 @@ contract BasicDistributor is AdvancedDistributor {
 	}
 
 	function VERSION() external pure virtual override returns (uint256) {
-		return 4;
+		return 5;
 	}
 
 	function claim(address beneficiary) external nonReentrant {
-		super._executeClaim(beneficiary, records[beneficiary].total);
+		// effects
+		uint256 claimedAmount = super._executeClaim(beneficiary, records[beneficiary].total);
+		// interactions
+		super._settleClaim(beneficiary, claimedAmount);
 	}
 }

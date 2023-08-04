@@ -20,8 +20,10 @@ abstract contract PriceTierVesting is AdvancedDistributor, IPriceTierVesting {
 		uint256 _start,
 		uint256 _end,
 		AggregatorV3Interface _oracle,
-		PriceTier[] memory _tiers
-	) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000) {
+		PriceTier[] memory _tiers,
+    uint160 _maxDelayTime,
+		uint160 _salt
+	) AdvancedDistributor(_token, _total, _uri, _voteFactor, 10000, _maxDelayTime, _salt) {
 		_setPriceTiers(_start, _end, _oracle, _tiers);
 	}
 
@@ -63,16 +65,19 @@ abstract contract PriceTierVesting is AdvancedDistributor, IPriceTierVesting {
 	}
 
 	function getVestedFraction(
-		address, /*beneficiary*/
+		address beneficiary,
 		uint256 time // time in seconds past epoch
 	) public view override returns (uint256) {
+		// shift this user's time by their fair delay
+		uint256 delayedTime = time - getFairDelayTime(beneficiary);
+
 		// no tokens are vested
-		if (time < start) {
+		if (delayedTime < start) {
 			return 0;
 		}
 
 		// all tokens are vested
-		if (time >= end) {
+		if (delayedTime >= end) {
 			return fractionDenominator;
 		}
 

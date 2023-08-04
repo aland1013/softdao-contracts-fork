@@ -2,7 +2,6 @@
 pragma solidity 0.8.16;
 
 import { Distributor, AdvancedDistributor } from "./AdvancedDistributor.sol";
-import { IVesting } from "../../interfaces/IVesting.sol";
 import { IContinuousVesting } from "../../interfaces/IContinuousVesting.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,10 +17,12 @@ abstract contract ContinuousVesting is AdvancedDistributor, IContinuousVesting {
 		uint256 _voteFactor,
 		uint256 _start,
 		uint256 _cliff,
-		uint256 _end
+		uint256 _end,
+    uint160 _maxDelayTime,
+		uint160 _salt
 	)
 		// use a large fraction denominator to provide the highest resolution on continuous vesting.
-		AdvancedDistributor(_token, _total, _uri, _voteFactor, 10**18)
+		AdvancedDistributor(_token, _total, _uri, _voteFactor, 10**18, _maxDelayTime, _salt)
 	{
 		require(_start <= _cliff, "vesting cliff before start");
 		require(_cliff <= _end, "vesting end before cliff");
@@ -35,21 +36,22 @@ abstract contract ContinuousVesting is AdvancedDistributor, IContinuousVesting {
 	}
 
 	function getVestedFraction(
-		address, /*beneficiary*/
+		address beneficiary,
 		uint256 time // time is in seconds past the epoch (e.g. block.timestamp)
-	) public view override(Distributor, IVesting) returns (uint256) {
+	) public view override returns (uint256) {
+		uint256 delayedTime = time- getFairDelayTime(beneficiary);
 		// no tokens are vested
-		if (time <= cliff) {
+		if (delayedTime <= cliff) {
 			return 0;
 		}
 
 		// all tokens are vested
-		if (time >= end) {
+		if (delayedTime >= end) {
 			return fractionDenominator;
 		}
 
 		// some tokens are vested
-		return (fractionDenominator * (time - start)) / (end - start);
+		return (fractionDenominator * (delayedTime - start)) / (end - start);
 	}
 
 	function getVestingConfig()

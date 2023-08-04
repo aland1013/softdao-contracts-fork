@@ -1,3 +1,30 @@
+# Sherlock Cross-Chain Distributor Audit
+
+## Setup
+* Install: `yarn`
+* Testing: `yarn chain` + `yarn test`
+
+## About the cross-chain distributor
+The two contracts that will be used in conjunction are `Satellite.sol` and `CrosschainTrancheVestingMerkle.sol`. Together, they allow an admin to set up an airdrop across multiple chains. We can safely assume that the Distributor contract owner is a trusted party.
+
+These contracts allow the owner to:
+* determine eligibility, token quantities, and domain for the airdrop using a merkle root (e.g. address A gets 100 USDC tokens on Ethereum, address B gets 200 USDC tokens on Arbitrum)
+* determine vesting schedule (e.g. 10% of the tokens vest August 1, 80% vest September 1, and the final 10% vest October 1).
+* update eligibility and vesting as required
+
+The beneficiaries (i.e. those people that will receive tokens in the airdrop) can be either EOAs or smart contracts, and can claim tokens in several ways:
+* with a merkle proof (`crosschainTrancheVestingMerkle.claimByMerkleProof()`) - EOA and smart contract: must receive tokens on address and chain specified in the merkle leaf
+* with a signature (`crosschainTrancheVestingMerkle.claimBySignature()`) - EOA only: can receive tokens on a different address or chain because the signature proves the beneficiary in the merkle leaf wants tokens somewhere else
+* through a cross-chain satellite (`satellite.initiateClaim()`) - EOA and smart contract: must receive tokens on address and chain specified in the merkle leaf
+
+Important: these contract rely on Connext correctly passing messages between chain. Of course, Connext working correctly is out of scope for this audit.
+
+The best place to start (including a sample merkle proof) is `test/distributor/CrosschainTrancheVestingMerkle.test.ts`.
+
+Note on testing Connext: in practice, one Connext contract will be deployed per domain/chain, but for these tests we deploy two Connext mocks to the same chain with different domains recorded.
+
+# Regular Readme
+
     ███████  ██████  ███████ ████████  
     ██      ██    ██ ██         ██     
     ███████ ██    ██ █████      ██     
