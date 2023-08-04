@@ -75,12 +75,12 @@ abstract contract AdvancedDistributor is
   }
 
   // Update voting power based on distribution record initialization or claims
-  function _reconcileVotingPower(address beneficiary, uint256 totalAmount) private {
+  function _reconcileVotingPower(address beneficiary) private {
     // current potential voting power
     uint256 currentVotes = balanceOf(beneficiary);
-    // correct voting power after (re)initialization of distribution record based on the number of claimable tokens remaining
-    uint256 claimedAmount = records[beneficiary].claimed;
-    uint256 newVotes = claimedAmount >= totalAmount ? 0 : tokensToVotes(totalAmount - claimedAmount);
+    // correct voting power after initialization, claim, or adjustment
+    DistributionRecord memory record = records[beneficiary];
+    uint256 newVotes = record.claimed >= record.total ? 0 : tokensToVotes(record.total - record.claimed);
 
     if (currentVotes > newVotes) {
       // reduce voting power through ERC20Votes extension
@@ -96,7 +96,7 @@ abstract contract AdvancedDistributor is
     uint256 totalAmount
   ) internal virtual override {
     super._initializeDistributionRecord(beneficiary, totalAmount);
-    _reconcileVotingPower(beneficiary, totalAmount);
+    _reconcileVotingPower(beneficiary);
   }
 
   function _executeClaim(
@@ -104,7 +104,7 @@ abstract contract AdvancedDistributor is
     uint256 totalAmount
   ) internal virtual override returns (uint256 _claimed) {
     _claimed = super._executeClaim(beneficiary, totalAmount);
-    _reconcileVotingPower(beneficiary, totalAmount);
+    _reconcileVotingPower(beneficiary);
   }
 
   /**
@@ -129,16 +129,12 @@ abstract contract AdvancedDistributor is
       total -= diff;
       records[beneficiary].total -= uint120(diff);
       token.safeTransfer(owner(), diff);
-      // reduce voting power
-      _burn(beneficiary, tokensToVotes(diff));
     } else {
       // increasing claimable tokens
       total += diff;
       records[beneficiary].total += uint120(diff);
-      // increase voting pwoer
-      _mint(beneficiary, tokensToVotes(diff));
     }
-
+    _reconcileVotingPower(beneficiary);
     emit Adjust(beneficiary, amount);
   }
 
