@@ -55,7 +55,8 @@ contract ConnextMock {
         address _originSender,
         uint32 _origin,
         bytes32[] memory _proof,
-        address _distributor) public returns (bytes memory) {
+        address _distributor
+    ) public returns (bytes memory) {
 
         return IXReceiver(_distributor).xReceive(
             _transferId,
