@@ -521,4 +521,26 @@ describe("CrosschainTrancheVestingMerkle", function () {
       )
     }
   });
+
+  // See sherlock-41 https://github.com/sherlock-audit/2023-06-tokensoft-judging/issues/41
+  it("Cannot increase voting power by re-initializing distribution record", async () => {
+    const [, amount, domain] = config.proof.claims[eligible1.address.toLowerCase()].data.map(d => d.value)
+    const proof = config.proof.claims[eligible1.address.toLowerCase()].proof
+
+    // get current voting power
+    await distributor.connect(eligible1).delegate(eligible1.address);
+    const votingPower1 = (await distributor.getVotes(eligible1.address)).toBigInt();
+
+    expect(votingPower1).toEqual(config.votingFactor/10000n * BigInt(amount) / 2n);
+
+    await distributor.initializeDistributionRecord(
+      domain,
+      eligible1.address,
+      amount,
+      proof
+    )
+
+    const votingPower2 = (await distributor.getVotes(eligible1.address)).toBigInt();
+    expect(votingPower2).toEqual(votingPower1);
+  })
 })

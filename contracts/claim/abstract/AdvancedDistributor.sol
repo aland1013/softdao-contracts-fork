@@ -54,14 +54,14 @@ abstract contract AdvancedDistributor is
     string memory _uri,
     uint256 _voteFactor,
     uint256 _fractionDenominator,
-    uint160 maxDelayTime,
-    uint160 salt
+    uint160 _maxDelayTime,
+    uint160 _salt
   )
     Distributor(_token, _total, _uri, _fractionDenominator)
     ERC20Permit('Internal vote tracker')
     ERC20('Internal vote tracker', 'IVT')
     Sweepable(payable(msg.sender))
-    FairQueue(maxDelayTime, salt)
+    FairQueue(_maxDelayTime, _salt)
   {
     voteFactor = _voteFactor;
     emit SetVoteFactor(voteFactor);
@@ -80,8 +80,19 @@ abstract contract AdvancedDistributor is
   ) internal virtual override {
     super._initializeDistributionRecord(beneficiary, totalAmount);
 
-    // add voting power through ERC20Votes extension
-    _mint(beneficiary, tokensToVotes(totalAmount));
+    // current potential voting power
+    uint256 currentVotes = balanceOf(beneficiary);
+    // correct voting power after (re)initialization of distribution record based on the number of claimable tokens remaining
+    uint256 claimedAmount = records[beneficiary].claimed;
+    uint256 newVotes = claimedAmount >= totalAmount ? 0 : tokensToVotes(totalAmount - claimedAmount);
+
+    if (currentVotes > newVotes) {
+      // reduce voting power through ERC20Votes extension
+      _burn(beneficiary, currentVotes - newVotes);
+    } else if (currentVotes < newVotes) {
+      // increase voting power through ERC20Votes extension
+      _mint(beneficiary, newVotes - currentVotes);
+    }
   }
 
   function _executeClaim(
