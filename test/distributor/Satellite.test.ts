@@ -165,7 +165,7 @@ describe("Satellite", function () {
     const transactionReceipt = await transactionData.wait()
     const iface = new ethers.utils.Interface(SatelliteDefinition.abi)
     const { logs } = transactionReceipt
-    const transferId = iface.parseLog(logs[2]).args[0]
+    const transferId = iface.parseLog(logs[1]).args[0]
 
     expect(transferId).toMatch(/^0x[0-9a-f]{64}$/)
   })
@@ -184,7 +184,7 @@ describe("Satellite", function () {
     const transactionReceipt = await transactionData.wait()
     const iface = new ethers.utils.Interface(SatelliteDefinition.abi)
     const { logs } = transactionReceipt
-    const transferId = iface.parseLog(logs[1]).args[0]
+    const transferId = iface.parseLog(logs[2]).args[0]
 
     expect(transferId).toMatch(/^0x[0-9a-f]{64}$/)
   })
