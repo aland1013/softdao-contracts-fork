@@ -213,6 +213,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
     // transfer tokens to the distributors
     await token.transfer(distributor.address, await distributor.total())
     await token.transfer(distributorWithQueue.address, await distributorWithQueue.total())
+    console.log({token: token.address, connextDestination: connextMockDestination.address, connextSource:connextMockSource.address, distributor: distributor.address, satellite: satellite.address})
   });
 
   it("Metadata is correct", async () => {
@@ -254,6 +255,9 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
     // fraction denominator is the expected value (10,000)
     expect((await distributor.getFractionDenominator()).toBigInt()).toEqual(10000n)
+
+    // Connext allowance has been set on the distributor to allow cross-chain withdrawals
+    expect((await token.allowance(distributor.address, connextMockSource.address)).toBigInt()).toEqual(config.total)
   })
 
   it("Can claim via EOA signature", async () => {
@@ -404,7 +408,6 @@ describe("CrosschainTrancheVestingMerkle", function () {
       proof
     )).rejects.toMatchObject({ message: expect.stringMatching(/invalid proof/) })
   })
-
 
   it("Can claim via Connext calls", async () => {
     // user calls satellite on domain 2
