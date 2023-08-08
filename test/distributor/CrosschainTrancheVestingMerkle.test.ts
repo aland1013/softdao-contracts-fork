@@ -260,6 +260,23 @@ describe("CrosschainTrancheVestingMerkle", function () {
     expect((await token.allowance(distributor.address, connextMockSource.address)).toBigInt()).toEqual(config.total)
   })
 
+  it("Admin can update total", async () => {
+    const t1 = await distributor.total();
+
+    expect(t1.toBigInt()).toEqual(config.total)
+
+    // update the total
+    await distributor.setTotal(config.total + 1n);
+
+    const t2 = await distributor.total();
+    expect(t2.toBigInt()).toEqual(config.total + 1n)
+
+    // reset the total
+    await distributor.setTotal(config.total);
+    const t3 = await distributor.total();
+    expect(t3.toBigInt()).toEqual(config.total)
+  })
+
   it("Can claim via EOA signature", async () => {
     const user = eligible1
 
