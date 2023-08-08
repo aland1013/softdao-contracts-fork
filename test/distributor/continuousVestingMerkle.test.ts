@@ -737,6 +737,14 @@ describe("ContinuousVestingMerkle", function () {
     )
     expect(distributionRecord.initialized).toEqual(true);
 
+    // eligible1 still has 50% of their original voting power (see Sherlock 41: https://github.com/sherlock-audit/2023-06-tokensoft-judging/issues/55)
+    await distributor.connect(eligible1).delegate(eligible1.address);
+    expectCloseEnough(
+      (await distributor.getVotes(user.address)).toBigInt(),
+      5000000000000000000000n,
+      BigInt(amount) / 100n
+    );
+
     // can re-initialize this distribution record with the correct details
     [index, beneficiary, amount] = updatedProof.claims[user.address].data.map(d => d.value)
     proof = updatedProof.claims[user.address].proof
@@ -749,6 +757,10 @@ describe("ContinuousVestingMerkle", function () {
 
     // the previously claimed value is preserved
     expect(distributionRecord.claimed.toBigInt()).toEqual(eligible1Claimed)
+
+    // eligible1 no longer has voting power
+    await distributor.connect(eligible1).delegate(eligible1.address);
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(0n);
 
     // eligible2 can claim using the total from the updated distribution record
     user = eligible2;

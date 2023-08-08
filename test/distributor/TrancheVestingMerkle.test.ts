@@ -16,6 +16,7 @@ type Tranche = {
 let deployer: SignerWithAddress
 let eligible1: SignerWithAddress
 let eligible2: SignerWithAddress
+let eligible3: SignerWithAddress
 let ineligible: SignerWithAddress
 let token: GenericERC20
 let DistributorFactory: TrancheVestingMerkle__factory
@@ -50,40 +51,42 @@ type Config = {
 // distribute a million tokens in total
 const config: Config = {
   // 7500 tokens
-  total: 7500000000000000000000n,
+  total: 7500000000000000000002n,
   // any string will work for these unit tests - the uri is not used on-chain
   uri: 'https://example.com',
   // 2x, denominated in fractionDenominator of 1e4 (basis points)
   votingFactor: 2n * 10n ** 4n,
   // created using yarn generate-merkle-root
   proof: {
-    "merkleRoot": "0x7bc676cc9d8db1f8fa03ca95e63b062cc08d8c0bfbdf5a0f18c3b9aadb66555e",
+    "merkleRoot": "0xf32ce147ef6c8e7a07fbe3ce1ae1aef2405a59b50db2a8ede14f4e75bfe7d949",
     "claims": {
-      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": {
+      "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": {
         "proof": [
-          "0xa82f515a479cbe664b37f89b05d1e13886cae562847741b55442ff8d9df08993"
+          "0x2407fcb79b873fc44e17093017a9d2ecd688419972e57cf95e726c0cb2cc1911",
+          "0xaaaad2f6e9b5bab2f21b412af6c8cd0747c84dbc38a5b6ac613d00132de8d366"
         ],
         "data": [
           {
             "name": "index",
             "type": "uint256",
-            "value": '1'
+            "value": '2'
           },
           {
             "name": "beneficiary",
             "type": "address",
-            "value": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+            "value": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65"
           },
           {
             "name": "amount",
             "type": "uint256",
-            "value": "2500000000000000000000"
+            "value": "1"
           }
         ]
       },
-      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": {
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": {
         "proof": [
-          "0xc8055cac33ef83d8876a5f8eeb53a54b23b84ef8eeea1cd116d15d78cdf24993"
+          "0x524b4658f483b7a148d5c638908ef5156c0b69227bf010e9bbc94068c62e3438",
+          "0xaaaad2f6e9b5bab2f21b412af6c8cd0747c84dbc38a5b6ac613d00132de8d366"
         ],
         "data": [
           {
@@ -94,7 +97,29 @@ const config: Config = {
           {
             "name": "beneficiary",
             "type": "address",
-            "value": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+            "value": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "value": "2500000000000000000000"
+          }
+        ]
+      },
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": {
+        "proof": [
+          "0xa4170e52dc35c1127b67e1c2f5466fce9673e61b44e077b7023f7c994d55c5dd"
+        ],
+        "data": [
+          {
+            "name": "index",
+            "type": "uint256",
+            "value": '1'
+          },
+          {
+            "name": "beneficiary",
+            "type": "address",
+            "value": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
           },
           {
             "name": "amount",
@@ -113,7 +138,7 @@ describe("TrancheVestingMerkle", function () {
     let now = BigInt(await time.latest()) + 1n;
     await time.increaseTo(now);
 
-    [deployer, eligible1, eligible2, ineligible] = await ethers.getSigners();
+    [deployer, eligible1, eligible2, ineligible, eligible3] = await ethers.getSigners();
 
     const GenericERC20Factory = await ethers.getContractFactory("GenericERC20", deployer);
     token = await GenericERC20Factory.deploy(
@@ -287,6 +312,7 @@ describe("TrancheVestingMerkle", function () {
       BigInt(config.proof.claims[user.address].data[2].value)
     )
 
+    // now the user has votes
     expect(distributionRecord.initialized).toEqual(true)
     expect(distributionRecord.claimed.toBigInt()).toEqual(0n)
     expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(amount))
@@ -294,8 +320,21 @@ describe("TrancheVestingMerkle", function () {
     // the user has no balance
     expect((await token.balanceOf(user.address)).toBigInt(),).toEqual(0n)
 
+    // the admin increases the voting factor
+    await distributor.setVoteFactor(1230000n)
+
     // now we claim!
     await distributor.claim(index, beneficiary, amount, proof)
+
+    // the voting factor has been updated by claiming (half of voting power remains at the 123x factor)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(123n * BigInt(amount) / 2n)
+
+    // the admin resets the voting factor
+    await distributor.setVoteFactor(config.votingFactor)
+
+    // the voting factor for this user can be fixed again
+    await distributor.initializeDistributionRecord(index, beneficiary, amount, proof)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(2n * BigInt(amount) / 2n)
 
     distributionRecord = await distributor.getDistributionRecord(user.address)
 
@@ -543,4 +582,33 @@ describe("TrancheVestingMerkle", function () {
     await checkSomeTranches(newTranches)
   });
 
+  // users can still claim after the voting factor is updated
+  // see Sherlock-56: 
+  it("users can claim despite voting factor rounding", async () => {
+    const distributor = fullyVestedDistributor;
+    const user = eligible3;
+    const [index, beneficiary, amount] = config.proof.claims[user.address].data.map(d => d.value)
+    const proof = config.proof.claims[user.address].proof
+
+    // set voting factor to 0.9x
+    await distributor.setVoteFactor(9000n)
+
+    await distributor.initializeDistributionRecord(index, beneficiary, amount, proof)
+    await distributor.connect(user).delegate(user.address)
+
+    // should have 0 votes due to rounding (0.9 * 1 => 0)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(0n)
+
+    // adjust quantity for this user (note - this is not secure for merkle-based distributors but still a good bug to catch)
+    await distributor.adjust(user.address, 1n)
+
+    // should have 1 vote (0.9 * 2 => 1)
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(1n)
+
+    // can still claim
+    await distributor.claim(index, beneficiary, amount, proof)
+
+    // should have 0 votes remaining
+    expect((await distributor.getVotes(user.address)).toBigInt()).toEqual(0n)
+  })
 })
