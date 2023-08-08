@@ -54,14 +54,14 @@ abstract contract AdvancedDistributor is
     string memory _uri,
     uint256 _voteFactor,
     uint256 _fractionDenominator,
-    uint160 maxDelayTime,
-    uint160 salt
+    uint160 _maxDelayTime,
+    uint160 _salt
   )
     Distributor(_token, _total, _uri, _fractionDenominator)
     ERC20Permit('Internal vote tracker')
     ERC20('Internal vote tracker', 'IVT')
     Sweepable(payable(msg.sender))
-    FairQueue(maxDelayTime, salt)
+    FairQueue(_maxDelayTime, _salt)
   {
     voteFactor = _voteFactor;
     emit SetVoteFactor(voteFactor);
@@ -74,14 +74,29 @@ abstract contract AdvancedDistributor is
     return (tokenAmount * voteFactor) / fractionDenominator;
   }
 
+  // Update voting power based on distribution record initialization or claims
+  function _reconcileVotingPower(address beneficiary) private {
+    // current potential voting power
+    uint256 currentVotes = balanceOf(beneficiary);
+    // correct voting power after initialization, claim, or adjustment
+    DistributionRecord memory record = records[beneficiary];
+    uint256 newVotes = record.claimed >= record.total ? 0 : tokensToVotes(record.total - record.claimed);
+
+    if (currentVotes > newVotes) {
+      // reduce voting power through ERC20Votes extension
+      _burn(beneficiary, currentVotes - newVotes);
+    } else if (currentVotes < newVotes) {
+      // increase voting power through ERC20Votes extension
+      _mint(beneficiary, newVotes - currentVotes);
+    }
+  }
+
   function _initializeDistributionRecord(
     address beneficiary,
     uint256 totalAmount
   ) internal virtual override {
     super._initializeDistributionRecord(beneficiary, totalAmount);
-
-    // add voting power through ERC20Votes extension
-    _mint(beneficiary, tokensToVotes(totalAmount));
+    _reconcileVotingPower(beneficiary);
   }
 
   function _executeClaim(
@@ -89,9 +104,7 @@ abstract contract AdvancedDistributor is
     uint256 totalAmount
   ) internal virtual override returns (uint256 _claimed) {
     _claimed = super._executeClaim(beneficiary, totalAmount);
-
-    // reduce voting power through ERC20Votes extension
-    _burn(beneficiary, tokensToVotes(_claimed));
+    _reconcileVotingPower(beneficiary);
   }
 
   /**
@@ -116,16 +129,12 @@ abstract contract AdvancedDistributor is
       total -= diff;
       records[beneficiary].total -= uint120(diff);
       token.safeTransfer(owner(), diff);
-      // reduce voting power
-      _burn(beneficiary, tokensToVotes(diff));
     } else {
       // increasing claimable tokens
       total += diff;
       records[beneficiary].total += uint120(diff);
-      // increase voting pwoer
-      _mint(beneficiary, tokensToVotes(diff));
     }
-
+    _reconcileVotingPower(beneficiary);
     emit Adjust(beneficiary, amount);
   }
 

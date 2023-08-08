@@ -146,7 +146,7 @@ describe("Satellite", function () {
 
   it("Metadata is correct", async () => {
     expect((await satellite.distributor()).toLowerCase()).toEqual(distributorAddress)
-    expect (await satellite.distributorDomain()).toEqual(distributorDomain)
+    expect(await satellite.distributorDomain()).toEqual(distributorDomain)
     expect(await satellite.domain()).toEqual(domain)
     expect(await satellite.connext()).toEqual(connext.address)
     expect(await satellite.getMerkleRoot()).toEqual(config.proof.merkleRoot)
@@ -166,7 +166,7 @@ describe("Satellite", function () {
     const iface = new ethers.utils.Interface(SatelliteDefinition.abi)
     const { logs } = transactionReceipt
     const transferId = iface.parseLog(logs[1]).args[0]
-    
+
     expect(transferId).toMatch(/^0x[0-9a-f]{64}$/)
   })
 
@@ -179,13 +179,13 @@ describe("Satellite", function () {
     const transactionData = await satellite.connect(user).initiateClaim(
       amount,
       proof,
-      {value: 1000000000000000n}
+      { value: 1000000000000000n }
     )
     const transactionReceipt = await transactionData.wait()
     const iface = new ethers.utils.Interface(SatelliteDefinition.abi)
     const { logs } = transactionReceipt
-    const transferId = iface.parseLog(logs[1]).args[0]
-    
+    const transferId = iface.parseLog(logs[2]).args[0]
+
     expect(transferId).toMatch(/^0x[0-9a-f]{64}$/)
   })
 
@@ -199,8 +199,8 @@ describe("Satellite", function () {
         domain, // <-- this is the same as the satellite domain
         config.proof.merkleRoot
       )
-  ).rejects.toMatchObject(
-    { message: expect.stringMatching(/same domain/) }
-  )
+    ).rejects.toMatchObject(
+      { message: expect.stringMatching(/same domain/) }
+    )
   })
 })

@@ -92,7 +92,7 @@ contract Satellite is MerkleSet {
       address(0), // delegate, only required for self-execution + slippage
       0, // total
       0, // slippage
-      abi.encodePacked(msg.sender, _domain, total, proof) // data
+      abi.encode(msg.sender, _domain, total, proof) // data
     );
 
     // Emit event

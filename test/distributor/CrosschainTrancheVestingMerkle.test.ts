@@ -36,6 +36,11 @@ let tranches: Tranche[]
 // largest possible delay for the distributor using a fair queue
 const maxDelayTime = 1000n
 
+// domains for crosschain claims
+const SOURCE_DOMAIN = 1735353714;
+const DESTINATION_DOMAIN = 2;
+
+
 type Config = {
   total: bigint
   uri: string
@@ -57,8 +62,8 @@ type Config = {
 
 // distribute a million tokens in total
 const config: Config = {
-  // 7500 tokens
-  total: 7500000000000000000000n,
+  // 8500 tokens
+  total: 8500000000000000000000n,
   // any string will work for these unit tests - the uri is not used on-chain
   uri: 'https://example.com',
   // 2x, denominated in fractionDenominator of 1e4 (basis points)
@@ -166,10 +171,10 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
     ConnextFactory = await ethers.getContractFactory("ConnextMock", deployer);
     connextMockSource = await ConnextFactory.deploy(
-      1735353714 // source domain
+      SOURCE_DOMAIN
     );
     connextMockDestination = await ConnextFactory.deploy(
-      2 // desination domain
+      DESTINATION_DOMAIN
     );
 
     // 50% of tokens should be vested
@@ -260,15 +265,34 @@ describe("CrosschainTrancheVestingMerkle", function () {
     expect((await token.allowance(distributor.address, connextMockSource.address)).toBigInt()).toEqual(config.total)
   })
 
-  it("Can claim via EOA signature", async () => {
+  it("Admin can update total", async () => {
+    const t1 = await distributor.total();
+
+    expect(t1.toBigInt()).toEqual(config.total)
+
+    // update the total
+    await distributor.setTotal(config.total + 1n);
+
+    const t2 = await distributor.total();
+    expect(t2.toBigInt()).toEqual(config.total + 1n)
+
+    // reset the total
+    await distributor.setTotal(config.total);
+    const t3 = await distributor.total();
+    expect(t3.toBigInt()).toEqual(config.total)
+  })
+
+  it.only("Can claim via EOA signature", async () => {
     const user = eligible1
+    const relayerFee = ethers.utils.parseEther('0.1')
 
     const [beneficiary, amount, domain] = config.proof.claims[user.address.toLowerCase()].data.map(d => d.value)
     const proof = config.proof.claims[user.address.toLowerCase()].proof
+    const recipientDomain = domain === DESTINATION_DOMAIN.toString() ? SOURCE_DOMAIN : DESTINATION_DOMAIN;
 
     const txData = [
       { name: "recipient", type: "address", value: user.address },
-      { name: "recipientDomain", type: "uint32", value: domain },
+      { name: "recipientDomain", type: "uint32", value: recipientDomain },
       { name: "beneficiary", type: "address", value: user.address },
       { name: "beneficiaryDomain", type: "uint32", value: domain },
       { name: "amount", type: "uint256", value: amount }
@@ -289,9 +313,15 @@ describe("CrosschainTrancheVestingMerkle", function () {
       proof
     )).rejects.toMatchObject({ message: expect.stringMatching(/!recovered/) })
 
-    let balance = await token.balanceOf(user.address)
-    expect(balance.toBigInt()).toEqual(0n)
-
+    // get initial balances
+    const getBalances = async () => {
+      return {
+        user: (await token.balanceOf(user.address)).toBigInt(),
+        distributor: (await token.balanceOf(distributor.address)).toBigInt(),
+        connext: (await token.balanceOf(connextMockSource.address)).toBigInt()
+      }
+    }
+    const initialBalances = await getBalances();
 
     // check that user can't claim with invalid proof
     const badProof = [
@@ -299,7 +329,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
     ]
     await expect(distributor.connect(user).claimBySignature(
       user.address,
-      domain,
+      recipientDomain,
       user.address,
       domain,
       amount,
@@ -307,23 +337,48 @@ describe("CrosschainTrancheVestingMerkle", function () {
       badProof
     )).rejects.toMatchObject({ message: expect.stringMatching(/invalid proof/) })
 
-    balance = await token.balanceOf(user.address)
-    expect(balance.toBigInt()).toEqual(0n)
+    // verify no asset transfers
+    let balances = await getBalances();
+    expect(balances.user).toEqual(initialBalances.user)
+    expect(balances.distributor).toEqual(initialBalances.distributor)
+    expect(balances.connext).toEqual(initialBalances.connext)
 
-    await distributor.connect(user).claimBySignature(
+    const request = await distributor.connect(user).claimBySignature(
       user.address,
-      domain,
+      recipientDomain,
       user.address,
       domain,
       amount,
       signature,
-      proof
-    )
+      proof,
+      { value: relayerFee }
+    );
+    const receipt = await request.wait()
 
-    const now = BigInt(await time.latest());
+    // verify relayer fee event
+    const RELAYER_FEE_EVENT_SIG = 'NativeRelayerFeeIncluded(address,uint256)'
+    const feeEvent = receipt.events.find(e => e.topics[0] === connextMockSource.interface.getEventTopic(RELAYER_FEE_EVENT_SIG))
+    const decodedFee = connextMockDestination.interface.decodeEventLog(RELAYER_FEE_EVENT_SIG, feeEvent.data, feeEvent.topics);
+    expect(decodedFee.amount).toEqual(relayerFee);
+    expect(decodedFee.caller).toEqual(distributor.address);
 
-    balance = await token.balanceOf(user.address)
-    expect(balance.toBigInt()).toEqual(BigInt(amount) / 2n)
+    // verify xcall event
+    const XCALL_FEE_EVENT_SIG = 'XCalled(uint32,address,address,address,uint256,uint256,bytes)'
+    const event = receipt.events.find(e => e.topics[0] === connextMockSource.interface.getEventTopic(XCALL_FEE_EVENT_SIG))
+    const decoded = connextMockDestination.interface.decodeEventLog(XCALL_FEE_EVENT_SIG, event.data, event.topics);
+    expect(decoded.destination.toString()).toEqual(recipientDomain.toString());
+    expect(decoded.to).toEqual(user.address);
+    expect(decoded.asset).toEqual(token.address);
+    expect(decoded.delegate).toEqual(user.address);
+    expect(decoded.amount.toBigInt()).toEqual(BigInt(amount) / 2n);
+    expect(decoded.slippage.toString()).toEqual("0");
+    expect(decoded.callData).toEqual("0x");
+
+    // verify asset transfers (distributor -> connext)
+    balances = await getBalances();
+    expect(balances.user).toEqual(initialBalances.user)
+    expect(balances.distributor).toEqual(initialBalances.distributor - BigInt(amount) / 2n)
+    expect(balances.connext).toEqual(initialBalances.connext + BigInt(amount) / 2n)
 
     const distributionRecord = await distributor.getDistributionRecord(user.address)
 
@@ -334,7 +389,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
     // check that user can't claim again
     await expect(distributor.connect(user).claimBySignature(
       user.address,
-      domain,
+      recipientDomain,
       user.address,
       domain,
       amount,
@@ -489,7 +544,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
       // set the tranches of the distributor so that the user should be able to claim 100% of tokens 2 seconds in the future
       const now = BigInt(await time.latest());
-    
+
       await time.increase(delay);
 
       await distributorWithQueue.setTranches([
@@ -498,7 +553,7 @@ describe("CrosschainTrancheVestingMerkle", function () {
 
       const [, amount,] = config.proof.claims[user.address.toLowerCase()].data.map(d => d.value)
       const proof = config.proof.claims[user.address.toLowerCase()].proof
-  
+
       // verify the user cannot yet claim
       await expect(distributorWithQueue.claimByMerkleProof(
         user.address,
@@ -521,4 +576,26 @@ describe("CrosschainTrancheVestingMerkle", function () {
       )
     }
   });
+
+  // See sherlock-41 https://github.com/sherlock-audit/2023-06-tokensoft-judging/issues/41
+  it("Cannot increase voting power by re-initializing distribution record", async () => {
+    const [, amount, domain] = config.proof.claims[eligible1.address.toLowerCase()].data.map(d => d.value)
+    const proof = config.proof.claims[eligible1.address.toLowerCase()].proof
+
+    // get current voting power
+    await distributor.connect(eligible1).delegate(eligible1.address);
+    const votingPower1 = (await distributor.getVotes(eligible1.address)).toBigInt();
+
+    expect(votingPower1).toEqual(config.votingFactor/10000n * BigInt(amount) / 2n);
+
+    await distributor.initializeDistributionRecord(
+      domain,
+      eligible1.address,
+      amount,
+      proof
+    )
+
+    const votingPower2 = (await distributor.getVotes(eligible1.address)).toBigInt();
+    expect(votingPower2).toEqual(votingPower1);
+  })
 })

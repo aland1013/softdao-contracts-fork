@@ -33,6 +33,7 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
   the remaining quantity of tokens that can be claimed - the allowance must be set for cross-chain claims.
   */
   function _allowConnext(uint256 amount) internal {
+    token.safeApprove(address(connext), 0);
     token.safeApprove(address(connext), amount);
   }
 
@@ -61,6 +62,7 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
   /**
    * @notice Settles claimed tokens to any valid Connext domain.
    * @dev permissions are not checked: call only after a valid claim is executed
+   * @dev assumes connext fees are paid in native assets, not from the claim total
    * @param _recipient: the address that will receive tokens
    * @param _recipientDomain: the domain of the address that will receive tokens
    * @param _amount: the amount of claims to settle
@@ -75,7 +77,7 @@ abstract contract CrosschainDistributor is AdvancedDistributor, ICrosschain {
     if (_recipientDomain == 0 || _recipientDomain == domain) {
       token.safeTransfer(_recipient, _amount);
     } else {
-      id = connext.xcall(
+      id = connext.xcall{value: msg.value}(
         _recipientDomain, // destination domain
         _recipient, // to
         address(token), // asset
