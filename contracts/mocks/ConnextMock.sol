@@ -15,6 +15,7 @@ contract ConnextMock {
         uint256 slippage,
         bytes callData
     );
+    event NativeRelayerFeeIncluded(address indexed caller, uint256 amount);
     uint32 private _domain;
     constructor(uint32 domain_) {
         setDomain(domain_);
@@ -40,6 +41,11 @@ contract ConnextMock {
         // Transfer asset if needed
         if (_amount > 0) {
             IERC20(_asset).transferFrom(msg.sender, address(this), _amount);
+        }
+
+        // Emit relayer fee event for native asset
+        if (msg.value > 0) {
+            emit NativeRelayerFeeIncluded(msg.sender, msg.value);
         }
         
         // Emit event + return identifier
